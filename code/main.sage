@@ -53,15 +53,14 @@ class CarrePopulation (Carre):
 #END Carre_population
 
 class Grille:
-    def __init__(self, largeur, hauteur, nbCellule):
+    def __init__(self, hauteurPx, nbCelluleHauteur, nbCelluleLargeur):
 
-        self.grille = Canvas(root, width=largeur, height=hauteur, background='white')
+        self.nbCelluleHauteur = nbCelluleHauteur
+        self.nbCelluleLargeur = nbCelluleLargeur
 
-        self.largeur = largeur
-        self.hauteur = hauteur
+        self.tailleCellule = int(hauteurPx/nbCelluleHauteur)
 
-        self.nbCellule = nbCellule
-        self.tailleCellule = hauteur/nbCellule
+        self.grille = Canvas(root, width=self.tailleCellule*nbCelluleLargeur, height=hauteurPx, background='white')
 
         self.matCarre = []
 
@@ -70,9 +69,9 @@ class Grille:
         self.grille.pack()
 
         #Création des carrés qui compose la grile et les range dans une matrice.
-        for i in range (0, nbCellule):
+        for i in range (0, nbCelluleHauteur):
             ligne = []
-            for j in range (0, nbCellule):
+            for j in range (0, nbCelluleLargeur):
                 if(randint(0, 1)):
                     ligne.append(Carre(self.tailleCellule, "vide"))
                 else:
@@ -81,8 +80,8 @@ class Grille:
         
                 
     def afficher(self):
-        for y in range(self.nbCellule):
-            for x in range(self.nbCellule):
+        for y in range(self.nbCelluleHauteur):
+            for x in range(self.nbCelluleLargeur):
                 self.matCarre[y][x].afficher(self.grille, x, y)
 
     def infecte(self, event):
@@ -112,12 +111,12 @@ class Grille:
 #END Grille
 
 
-#Main
+##### MAIN #####
 
 root = Tk()
 root.title('Propagation virus')
 
-grille = Grille(700, 700, 50)
+grille = Grille(700, 50, 70)
 grille.afficher()
 
 root.mainloop()
