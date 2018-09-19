@@ -2,31 +2,31 @@
 
 from tkinter import *
 from random import randint
-
+import time
 
 class Carre:
-    def __init__(self, grille, x, y, tailleCellule, etat):
+    def __init__(self, tailleCellule, etat):
 
         self.etat = etat
-        self.grille = grille
-        self.x = x
-        self.y = y
         self.tailleCellule = tailleCellule
 
-        if   (self.etat == "vide"):
-            self.couleur = 'white'
-        elif (self.etat == "sain"):
+        if (self.etat == "sain"):
             self.couleur = 'green'
         elif (self.etat == "infecte"):
             self.couleur = 'red'
+        else:
+            self.couleur = 'white'
 
-        grille.create_rectangle(x, y, x+tailleCellule, y+tailleCellule, fill=self.couleur)
+    def afficher (self, canvas, x, y):
+        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x+self.tailleCellule)*self.tailleCellule, (y+self.tailleCellule)*self.tailleCellule, fill=self.couleur)
 
     def setEtat (self, etat):
-        self.etat = etat
-
-    def getEtat (self):
-        return self.etat
+        if (etat == "sain"):
+            self.couleur = 'green'
+        elif (etat == "infecte"):
+            self.couleur = 'red'
+        else:
+            self.couleur = 'white'
 
 #END Carre
 """
@@ -35,14 +35,12 @@ class Carre_population (Carre):
         self.moyenneAge = moyenneAge
         self.nbPersonne = nbPersonne
         self.etat = etat
-
         if (self.etat == "sain"):
             self.couleur = 'green'
         elif (self.etat == "contamine"):
             self.couleur = 'red'
         else: # donc case inconnue
             self.couleur = 'yellow'
-
     def changerEtat (self, etat):
         self.etat = etat
 #END Carre_population
@@ -57,14 +55,6 @@ class Grille:
         self.tailleCellule = tailleCellule
         self.matCarre = []
 
-        #Création du damier de la grillle
-        for x in range (0, hauteur, tailleCellule):
-            self.grille.create_line(x,0,x,hauteur,width=1,fill='black')
-
-        for y in range (0, largeur, tailleCellule):
-            self.grille.create_line(0,y,largeur,y,width=1,fill='black')
-
-
         self.grille.bind("<Button-1>", self.infecte)
         self.grille.pack()
 
@@ -73,12 +63,16 @@ class Grille:
             ligne = []
             for j in range (0, hauteur/tailleCellule):
                 if(randint(0, 1)):
-                    ligne.append(Carre(self.grille, i*tailleCellule, j*tailleCellule, tailleCellule, "vide"))
+                    ligne.append(Carre(tailleCellule, "vide"))
                 else:
-                    ligne.append(Carre(self.grille, i*tailleCellule, j*tailleCellule, tailleCellule, "sain"))    
+                    ligne.append(Carre(tailleCellule, "sain"))    
             self.matCarre.append(ligne)    
         
                 
+    def afficher(self):
+        for y in range(self.largeur/self.tailleCellule):
+            for x in range(self.hauteur/self.tailleCellule):
+                self.matCarre[y][x].afficher(self.grille, x, y)
 
     def infecte(self, event):
         x = event.x -(event.x%self.tailleCellule)
@@ -86,10 +80,11 @@ class Grille:
         
         for i in range(0, self.largeur/self.tailleCellule):
             for j in range(0, self.hauteur/self.tailleCellule):
-                if (self.matCarre[i][j].x == x and self.matCarre[i][j].y == y):
+                if (i*self.tailleCellule == x and j*self.tailleCellule == y):
                     #TROUVER COMMENT SUPPRIMER LE CARRE PRECEDEMENT À CETTE PLACE
-                    self.matCarre[i][j] = Carre(self.grille, x, y, self.tailleCellule, "infecte")
+                    self.matCarre[j][i].setEtat("infecte")
                     print(i,j)
+        self.afficher()
 #END Grille
 
 
@@ -100,6 +95,9 @@ root.title('Propagation virus')
 
 
 grille = Grille(500, 500, 25)
+grille.afficher()
+
+
 
 
 root.mainloop()
