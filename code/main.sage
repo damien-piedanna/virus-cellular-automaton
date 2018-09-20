@@ -16,7 +16,7 @@ class Carre:
             self.couleur = 'white'
 
     def afficher (self, canvas, x, y):
-        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x*self.tailleCellule)+self.tailleCellule, (y*self.tailleCellule)+self.tailleCellule, fill=self.couleur)
+        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x*self.tailleCellule)+self.tailleCellule, (y*self.tailleCellule)+self.tailleCellule, fill=self.couleur, width = 0)
 
     def setEtat (self, etat):
         self.etat = etat;
@@ -60,7 +60,7 @@ class Grille:
 
         self.tailleCellule = int(hauteurPx/nbCelluleHauteur)
 
-        self.grille = Canvas(root, width=self.tailleCellule*nbCelluleLargeur, height=hauteurPx, background='white')
+        self.grille = Canvas(root, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
         self.matCarre = []
 
@@ -76,8 +76,7 @@ class Grille:
                     ligne.append(Carre(self.tailleCellule, "vide"))
                 else:
                     ligne.append(CarrePopulation(self.tailleCellule, "sain", 50))    
-            self.matCarre.append(ligne)    
-        
+            self.matCarre.append(ligne)
                 
     def afficher(self):
         for y in range(self.nbCelluleHauteur):
@@ -116,7 +115,8 @@ class Grille:
 root = Tk()
 root.title('Propagation virus')
 
-grille = Grille(700, 50, 70)
+
+grille = Grille(1080, 600, 600)
 grille.afficher()
 
 root.mainloop()
