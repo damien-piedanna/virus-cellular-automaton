@@ -65,7 +65,7 @@ class Grille:
         self.matCarre = []
 
         self.grille.bind("<Button-1>", self.infecter)
-        self.grille.bind("<Button-2>", self.propager)
+        self.grille.bind("<Button-2>", self.propagerx1)
         self.grille.bind("<Button-3>", self.guerir)
         self.grille.pack()
 
@@ -140,11 +140,20 @@ class Grille:
 
 
 
-    def propager (self, event) :
+    def propager (self):
         for y in range(self.nbCelluleHauteur):
             for x in range(self.nbCelluleLargeur):
                 if (self.matCarre[y][x].etat == "sain"):
-                    self.uneFonction(self.matCarre[y][x], x, y)
+                    self.uneFonction(self.matCarre[y][x], x, y)    
+
+
+    def propagerx1 (self, event):
+        self.propager();
+
+    def propagerxfois (self):
+        for i in range(0,10):
+            time.sleep(1);
+            self.propager();
 
 #END Grille
 
@@ -154,7 +163,9 @@ root = Tk()
 root.title('Propagation virus')
 
 
-grille = Grille(1080, 150, 150)
+grille = Grille(800, 10, 10)
 grille.afficher()
 
+boutonStart = Button(root, text="Start", command=grille.propagerxfois)
+boutonStart.pack()
 root.mainloop()
