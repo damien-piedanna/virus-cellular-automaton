@@ -16,7 +16,7 @@ class Carre:
             self.couleur = 'white'
 
     def afficher (self, canvas, x, y):
-        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x*self.tailleCellule)+self.tailleCellule, (y*self.tailleCellule)+self.tailleCellule, fill=self.couleur, width = 0)
+        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x*self.tailleCellule)+self.tailleCellule, (y*self.tailleCellule)+self.tailleCellule, fill=self.couleur, width = 1)
 
     def setEtat (self, etat):
         self.etat = etat;
@@ -64,7 +64,8 @@ class Grille:
 
         self.matCarre = []
 
-        self.grille.bind("<Button-1>", self.infecte)
+        self.grille.bind("<Button-1>", self.infecter)
+        self.grille.bind("<Button-2>", self.propager)
         self.grille.bind("<Button-3>", self.guerir)
         self.grille.pack()
 
@@ -83,7 +84,7 @@ class Grille:
             for x in range(self.nbCelluleLargeur):
                 self.matCarre[y][x].afficher(self.grille, x, y)
 
-    def infecte(self, event):
+    def infecter(self, event):
         x = event.x - (event.x%self.tailleCellule)
         y = event.y - (event.y%self.tailleCellule)
 
@@ -107,8 +108,45 @@ class Grille:
             self.matCarre[j][i].afficher(self.grille, i, j)
             print("la cellule " + repr(i) + " ; " + repr(j) + " a été guérie.")
 
-#END Grille
+    def uneFonction (self, carre, posX, posY):
+        matDeTest = self.matCarre
+        nbCasesAdjInfec = 0
 
+        if (posY > 0 and posX > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur and matDeTest[posY-1][posX-1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posY > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur and matDeTest[posY-1][posX].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posY > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur-1 and matDeTest[posY-1][posX+1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posX > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur and matDeTest[posY][posX-1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posX > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur-1 and matDeTest[posY][posX+1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posX > 0 and posY < self.nbCelluleHauteur-1 and posX < self.nbCelluleLargeur and matDeTest[posY+1][posX-1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posY < self.nbCelluleHauteur-1 and posX < self.nbCelluleLargeur and matDeTest[posY+1][posX].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+        if (posY < self.nbCelluleHauteur-1 and posX < self.nbCelluleLargeur-1 and matDeTest[posY+1][posX+1].etat == "infecte"):
+            nbCasesAdjInfec = nbCasesAdjInfec + 1
+
+        if (nbCasesAdjInfec > 0):
+            #print(repr(nbCasesAdjInfec) + " cellules infectées autour de " + repr(posX) + " ; " + repr(posY))
+
+            nbAlea = randint(0,100)
+            if (nbAlea < nbCasesAdjInfec*12.5):
+                self.matCarre[posY][posX].setEtat("infecte")
+                self.matCarre[posY][posX].afficher(self.grille, posX, posY)
+                print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
+
+
+
+    def propager (self, event) :
+        for y in range(self.nbCelluleHauteur):
+            for x in range(self.nbCelluleLargeur):
+                if (self.matCarre[y][x].etat == "sain"):
+                    self.uneFonction(self.matCarre[y][x], x, y)
+
+#END Grille
 
 ##### MAIN #####
 
@@ -116,7 +154,7 @@ root = Tk()
 root.title('Propagation virus')
 
 
-grille = Grille(1080, 600, 600)
+grille = Grille(1080, 150, 150)
 grille.afficher()
 
 root.mainloop()
