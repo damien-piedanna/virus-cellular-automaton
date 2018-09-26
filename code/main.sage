@@ -3,6 +3,7 @@
 from tkinter import *
 from random import randint
 import time
+import threading
 
 class Carre:
     def __init__(self, tailleCellule, etat):
@@ -60,6 +61,9 @@ class Grille:
 
         self.tailleCellule = int(hauteurPx/nbCelluleHauteur)
 
+        self.nbInfecte = 0
+        self.nbSain = 0
+
         self.grille = Canvas(root, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
         self.matCarre = []
@@ -77,12 +81,15 @@ class Grille:
                     ligne.append(Carre(self.tailleCellule, "vide"))
                 else:
                     ligne.append(CarrePopulation(self.tailleCellule, "sain", 50))    
+                    self.nbSain = self.nbSain + 1
             self.matCarre.append(ligne)
                 
     def afficher(self):
         for y in range(self.nbCelluleHauteur):
             for x in range(self.nbCelluleLargeur):
                 self.matCarre[y][x].afficher(self.grille, x, y)
+
+
 
     def infecter(self, event):
         x = event.x - (event.x%self.tailleCellule)
@@ -95,6 +102,8 @@ class Grille:
             self.matCarre[j][i].setEtat("infecte")
             self.matCarre[j][i].afficher(self.grille, i, j)
             print("la cellule " + repr(i) + " ; " + repr(j) + " a été infectée.")
+            self.nbSain = self.nbSain - 1
+            self.nbInfecte = self.nbInfecte + 1
 
     def guerir(self, event):
         x = event.x -(event.x%self.tailleCellule)
@@ -107,6 +116,8 @@ class Grille:
             self.matCarre[j][i].setEtat("sain")
             self.matCarre[j][i].afficher(self.grille, i, j)
             print("la cellule " + repr(i) + " ; " + repr(j) + " a été guérie.")
+            self.nbSain = self.nbSain + 1
+            self.nbInfecte = self.nbInfecte - 1
 
     def uneFonction (self, carre, posX, posY):
         matDeTest = self.matCarre
@@ -137,7 +148,8 @@ class Grille:
                 self.matCarre[posY][posX].setEtat("infecte")
                 self.matCarre[posY][posX].afficher(self.grille, posX, posY)
                 print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
-
+                self.nbSain = self.nbSain - 1
+                self.nbInfecte = self.nbInfecte + 1
 
 
     def propager (self):
@@ -150,10 +162,39 @@ class Grille:
     def propagerx1 (self, event):
         self.propager();
 
-    def propagerxfois (self):
-        for i in range(0,10):
-            time.sleep(1);
-            self.propager();
+
+class MonThread(threading.Thread):
+    def __init__(self, grille, compteur):
+        threading.Thread.__init__(self)
+        self._etat = False
+        self._pause = True
+        self.grille = grille
+        self.compteur = compteur
+ 
+    def run(self):
+        self._etat = True
+        cpt = 0
+        while self._etat:
+            if self._pause:
+                time.sleep(0.1)
+                continue
+            time.sleep (1)
+            grille.propager()
+            cpt = cpt +1
+            compteur.config(text="Jour " + repr(cpt))
+            pct = int(grille.nbInfecte*100/(grille.nbInfecte + grille.nbSain))
+            pctInfecte.config(text="Infectes: " + repr(pct) + "%")
+
+ 
+    def stop(self):
+        self._etat = False
+        sys.exit("Arrêt du programme...")
+ 
+    def pause(self):
+        self._pause = True
+ 
+    def continu(self):
+        self._pause = False
 
 #END Grille
 
@@ -163,9 +204,25 @@ root = Tk()
 root.title('Propagation virus')
 
 
-grille = Grille(800, 10, 10)
+compteur = Label(root, text="Jour 0")
+compteur.pack()
+
+pctInfecte = Label(root, text="Infecte : 0%")
+pctInfecte.pack()
+
+grille = Grille(850, 250, 250)
 grille.afficher()
 
-boutonStart = Button(root, text="Start", command=grille.propagerxfois)
+thread = MonThread(grille, compteur)
+thread.start()
+
+boutonStart = Button(root, text="Start", command=thread.continu)
 boutonStart.pack()
+boutonPause = Button(root, text="Pause", command=thread.pause)
+boutonPause.pack()
+boutonStop = Button(root, text="Stop", command=thread.stop)
+boutonStop.pack()
+
+
 root.mainloop()
+
