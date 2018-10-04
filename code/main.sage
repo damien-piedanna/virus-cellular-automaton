@@ -4,6 +4,7 @@ from tkinter import *
 from random import randint
 import time
 import threading
+import copy
 
 class Carre:
     def __init__(self, tailleCellule, etat):
@@ -53,13 +54,25 @@ class CarrePopulation (Carre):
 
 #END Carre_population
 
+class Virus:
+    def __init__(self, label):
+        self.label = label
+        if (self.label == "Peste noire"):
+            self.contagiosite = 99
+        else:
+            self.contagiosite = 5
+
+
+
 class Grille:
-    def __init__(self, hauteurPx, nbCelluleHauteur, nbCelluleLargeur):
+    def __init__(self, hauteurPx, nbCelluleHauteur, nbCelluleLargeur, virus):
 
         self.nbCelluleHauteur = nbCelluleHauteur
         self.nbCelluleLargeur = nbCelluleLargeur
 
         self.tailleCellule = int(hauteurPx/nbCelluleHauteur)
+        if (nbCelluleLargeur*self.tailleCellule > 1920):
+            self.tailleCellule = int(1920/nbCelluleLargeur)
 
         self.nbInfecte = 0
         self.nbSain = 0
@@ -69,9 +82,11 @@ class Grille:
         self.matCarre = []
 
         self.grille.bind("<Button-1>", self.infecter)
-        self.grille.bind("<Button-2>", self.propagerx1)
+        self.grille.bind("<Button-2>", self.propagerUneFois)
         self.grille.bind("<Button-3>", self.guerir)
         self.grille.pack()
+
+        self.virus = virus
 
         #Création des carrés qui compose la grile et les range dans une matrice.
         for i in range (0, nbCelluleHauteur):
@@ -119,8 +134,7 @@ class Grille:
             self.nbSain = self.nbSain + 1
             self.nbInfecte = self.nbInfecte - 1
 
-    def uneFonction (self, carre, posX, posY):
-        matDeTest = self.matCarre
+    def uneFonction (self, matDeTest,posX, posY):
         nbCasesAdjInfec = 0
 
         if (posY > 0 and posX > 0 and posY < self.nbCelluleHauteur and posX < self.nbCelluleLargeur and matDeTest[posY-1][posX-1].etat == "infecte"):
@@ -144,22 +158,26 @@ class Grille:
             #print(repr(nbCasesAdjInfec) + " cellules infectées autour de " + repr(posX) + " ; " + repr(posY))
 
             nbAlea = randint(0,100)
-            if (nbAlea < nbCasesAdjInfec*12.5):
+            if (nbAlea < nbCasesAdjInfec*self.virus.contagiosite):
                 self.matCarre[posY][posX].setEtat("infecte")
                 self.matCarre[posY][posX].afficher(self.grille, posX, posY)
                 print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
                 self.nbSain = self.nbSain - 1
                 self.nbInfecte = self.nbInfecte + 1
 
+                if (matDeTest == self.matCarre):
+                    print 'cest chiant'
+
 
     def propager (self):
+        matDeTest = copy.deepcopy(self.matCarre)
         for y in range(self.nbCelluleHauteur):
             for x in range(self.nbCelluleLargeur):
                 if (self.matCarre[y][x].etat == "sain"):
-                    self.uneFonction(self.matCarre[y][x], x, y)    
+                    self.uneFonction(matDeTest, x, y)
 
 
-    def propagerx1 (self, event):
+    def propagerUneFois (self, event):
         self.propager();
 
 
@@ -210,7 +228,7 @@ compteur.pack()
 pctInfecte = Label(root, text="Infecte : 0%")
 pctInfecte.pack()
 
-grille = Grille(850, 250, 250)
+grille = Grille(850, 50, 50, Virus("Peste noire"))
 grille.afficher()
 
 thread = MonThread(grille, compteur)
@@ -223,6 +241,4 @@ boutonPause.pack()
 boutonStop = Button(root, text="Stop", command=thread.stop)
 boutonStop.pack()
 
-
 root.mainloop()
-
