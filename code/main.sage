@@ -62,9 +62,9 @@ class Virus:
     def __init__(self, label):
         self.label = label
         if (self.label == "Peste noire"):
-            self.contagiosite = 12.5
+            self.tauxReproduction = 12.5
         else:
-            self.contagiosite = 5
+            self.tauxReproduction = 5
 
 
 
@@ -139,14 +139,14 @@ class Grille:
                     print(ageMoy);
                     self.nbSain = self.nbSain + 1
             self.matCarre.append(ligne)
-                
+    #affiche la grille
     def afficher(self):
         for y in range(self.nbCelluleHauteur):
             for x in range(self.nbCelluleLargeur):
                 self.matCarre[y][x].afficher(self.grille, x, y)
 
 
-
+	#infecte la case lorsqu'on clique gauche dessus
     def infecter(self, event):
         x = event.x - (event.x%self.tailleCellule)
         y = event.y - (event.y%self.tailleCellule)
@@ -161,6 +161,7 @@ class Grille:
             self.nbSain = self.nbSain - 1
             self.nbInfecte = self.nbInfecte + 1
 
+	#soigne la case lorsqu'on clique droit dessus
     def guerir(self, event):
         x = event.x -(event.x%self.tailleCellule)
         y = event.y -(event.y%self.tailleCellule)
@@ -176,25 +177,26 @@ class Grille:
             self.nbInfecte = self.nbInfecte - 1
 
     def uneFonction (self, matDeTest,posX, posY):
-        tauxInfection = 0.0
 
-        # 01 02 03 04 05 #
-        # 06 07 08 09 10 #
-        # 11 12 XX 13 14 #
-        # 15 16 17 18 19 #
-        # 20 21 22 23 24 #
+		tauxInfection = 0.0
+		# 01 02 03 04 05 #
+		# 06 07 08 09 10 #
+		# 11 12 XX 13 14 #
+		# 15 16 17 18 19 #
+		# 20 21 22 23 24 #
 
-        if(posY >= 2):
-	        if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
-	            tauxInfection = tauxInfection + 0.25
-	        if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
-	            tauxInfection = tauxInfection + 0.5
-	        if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
-	            tauxInfection = tauxInfection + 0.75
-	        if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
-	            tauxInfection = tauxInfection + 0.5
-	        if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
-	            tauxInfection = tauxInfection + 0.25
+		#Récupère le nombre de case inféctées pour chaque case et ajoute si c'est le cas un taux.
+		if(posY >= 2):
+			if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
+				tauxInfection = tauxInfection + 0.25
+			if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
+				tauxInfection = tauxInfection + 0.5
+			if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
+				tauxInfection = tauxInfection + 0.75
+			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
+				tauxInfection = tauxInfection + 0.5
+			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
+				tauxInfection = tauxInfection + 0.25
 
 		if(posY >= 1 ):
 			if (posX >= 2 and matDeTest[posY-1][posX-2].etat == "infecte"): #6
@@ -243,21 +245,18 @@ class Grille:
 				tauxInfection = tauxInfection + 0.25
 
 
-        if (tauxInfection > 0):
-            print("La cellule  " + repr(posX) + " ; " + repr(posY) + " a un taux d'infection de " + repr(tauxInfection))
+		if (tauxInfection > 0):
+			print("La cellule  " + repr(posX) + " ; " + repr(posY) + " a un taux d'infection de " + repr(round(tauxInfection,2)))
+			#Defini si la case devient infectées
+			nbAlea = randint(0,100)
+			if (nbAlea < tauxInfection*self.virus.tauxReproduction):
+				self.matCarre[posY][posX].setEtat("infecte")
+				self.matCarre[posY][posX].afficher(self.grille, posX, posY)
+				print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
+				self.nbSain = self.nbSain - 1
+				self.nbInfecte = self.nbInfecte + 1
 
-            nbAlea = randint(0,100)
-            if (nbAlea < tauxInfection*self.virus.contagiosite):
-                self.matCarre[posY][posX].setEtat("infecte")
-                self.matCarre[posY][posX].afficher(self.grille, posX, posY)
-                print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
-                self.nbSain = self.nbSain - 1
-                self.nbInfecte = self.nbInfecte + 1
-
-                if (matDeTest == self.matCarre):
-                    print 'cest chiant'
-
-
+	#Propage le virus jour par jour 
     def propager (self):
         matDeTest = copy.deepcopy(self.matCarre)
         for y in range(self.nbCelluleHauteur):
@@ -265,7 +264,7 @@ class Grille:
                 if (self.matCarre[y][x].etat == "sain"):
                     self.uneFonction(matDeTest, x, y)
 
-
+    #Propage le virus d'un jour                
     def propagerUneFois (self, event):
         self.propager();
 
@@ -307,24 +306,30 @@ class MonThread(threading.Thread):
 
 ##### MAIN #####
 
+#Création de la fenêtre
 root = Tk()
 root.title('Propagation virus')
 
-
+#Création compteur de jour
 compteur = Label(root, text="Jour 0")
 compteur.pack()
 
+#Création % inféctées
 pctInfecte = Label(root, text="Infecte : 0%")
 pctInfecte.pack()
 
-grille = Grille(850, 100, 100, Virus("Peste noire"), 5)
+#Création de la grille représentative de la population
+#Paramètres = Taille en pixel, largeur, longueur, virus, nb de personne dans un carré
+grille = Grille(850, 50, 50, Virus("Peste noire"), 5)
 grille.afficher()
 
+#Création d'un thread pour la propagation
 thread = MonThread(grille, compteur)
 thread.start()
 
 root.protocol("WM_DELETE_WINDOW", thread.stop)
 
+#Creation des boutons
 boutonStart = Button(root, text="Start", command=thread.continu)
 boutonStart.pack()
 boutonPause = Button(root, text="Pause", command=thread.pause)
@@ -332,4 +337,5 @@ boutonPause.pack()
 boutonStop = Button(root, text="Stop", command=thread.stop)
 boutonStop.pack()
 
+#Lancement de la fenêtre
 root.mainloop()
