@@ -146,7 +146,7 @@ class Grille:
                 self.matCarre[y][x].afficher(self.grille, x, y)
 
 
-	#infecte la case lorsqu'on clique gauche dessus
+    #infecte la case lorsqu'on clique gauche dessus
     def infecter(self, event):
         x = event.x - (event.x%self.tailleCellule)
         y = event.y - (event.y%self.tailleCellule)
@@ -161,7 +161,7 @@ class Grille:
             self.nbSain = self.nbSain - 1
             self.nbInfecte = self.nbInfecte + 1
 
-	#soigne la case lorsqu'on clique droit dessus
+    #soigne la case lorsqu'on clique droit dessus
     def guerir(self, event):
         x = event.x -(event.x%self.tailleCellule)
         y = event.y -(event.y%self.tailleCellule)
@@ -178,85 +178,85 @@ class Grille:
 
     def uneFonction (self, matDeTest,posX, posY):
 
-		tauxInfection = 0.0
-		# 01 02 03 04 05 #
-		# 06 07 08 09 10 #
-		# 11 12 XX 13 14 #
-		# 15 16 17 18 19 #
-		# 20 21 22 23 24 #
+        tauxInfection = 0.0
+        # 01 02 03 04 05 #
+        # 06 07 08 09 10 #
+        # 11 12 XX 13 14 #
+        # 15 16 17 18 19 #
+        # 20 21 22 23 24 #
 
-		#Récupère le nombre de case inféctées pour chaque case et ajoute si c'est le cas un taux.
-		if(posY >= 2):
-			if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
-				tauxInfection = tauxInfection + 0.25
-			if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
-				tauxInfection = tauxInfection + 0.5
-			if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
-				tauxInfection = tauxInfection + 0.5
-			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
-				tauxInfection = tauxInfection + 0.25
+        #Récupère le nombre de case inféctées pour chaque case et ajoute si c'est le cas un taux.
+        if(posY >= 2):
+            if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
+                tauxInfection = tauxInfection + 0.25
+            if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
+                tauxInfection = tauxInfection + 0.5
+            if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
+                tauxInfection = tauxInfection + 0.5
+            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
+                tauxInfection = tauxInfection + 0.25
 
-		if(posY >= 1 ):
-			if (posX >= 2 and matDeTest[posY-1][posX-2].etat == "infecte"): #6
-				tauxInfection = tauxInfection + 0.5
-			if (posX >= 1 and matDeTest[posY-1][posX-1].etat == "infecte"): #7
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur and matDeTest[posY-1][posX].etat == "infecte"): #8
-				tauxInfection = tauxInfection + 1
-			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-1][posX+1].etat == "infecte"): #9
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-1][posX+2].etat == "infecte"): #10
-				tauxInfection = tauxInfection + 0.5
+        if(posY >= 1 ):
+            if (posX >= 2 and matDeTest[posY-1][posX-2].etat == "infecte"): #6
+                tauxInfection = tauxInfection + 0.5
+            if (posX >= 1 and matDeTest[posY-1][posX-1].etat == "infecte"): #7
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur and matDeTest[posY-1][posX].etat == "infecte"): #8
+                tauxInfection = tauxInfection + 1
+            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-1][posX+1].etat == "infecte"): #9
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-1][posX+2].etat == "infecte"): #10
+                tauxInfection = tauxInfection + 0.5
 
-		if(posY < self.nbCelluleHauteur):
-			if (posX >= 2 and matDeTest[posY][posX-2].etat == "infecte"): #11
-				tauxInfection = tauxInfection + 0.75
-			if (posX >= 1 and matDeTest[posY][posX-1].etat == "infecte"): #12
-				tauxInfection = tauxInfection + 1
-			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY][posX+1].etat == "infecte"): #13
-				tauxInfection = tauxInfection + 1        
-			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY][posX+2].etat == "infecte"): #14
-				tauxInfection = tauxInfection + 0.75
+        if(posY < self.nbCelluleHauteur):
+            if (posX >= 2 and matDeTest[posY][posX-2].etat == "infecte"): #11
+                tauxInfection = tauxInfection + 0.75
+            if (posX >= 1 and matDeTest[posY][posX-1].etat == "infecte"): #12
+                tauxInfection = tauxInfection + 1
+            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY][posX+1].etat == "infecte"): #13
+                tauxInfection = tauxInfection + 1        
+            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY][posX+2].etat == "infecte"): #14
+                tauxInfection = tauxInfection + 0.75
 
-		if(posY < self.nbCelluleHauteur-1):
-			if (posX >= 2 and matDeTest[posY+1][posX-2].etat == "infecte"): #15
-				tauxInfection = tauxInfection + 0.5
-			if (posX >= 1 and matDeTest[posY+1][posX-1].etat == "infecte"): #16
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur and matDeTest[posY+1][posX].etat == "infecte"): #17
-				tauxInfection = tauxInfection + 1
-			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+1][posX+1].etat == "infecte"): #18
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+1][posX+2].etat == "infecte"): #19
-				tauxInfection = tauxInfection + 0.5
+        if(posY < self.nbCelluleHauteur-1):
+            if (posX >= 2 and matDeTest[posY+1][posX-2].etat == "infecte"): #15
+                tauxInfection = tauxInfection + 0.5
+            if (posX >= 1 and matDeTest[posY+1][posX-1].etat == "infecte"): #16
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur and matDeTest[posY+1][posX].etat == "infecte"): #17
+                tauxInfection = tauxInfection + 1
+            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+1][posX+1].etat == "infecte"): #18
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+1][posX+2].etat == "infecte"): #19
+                tauxInfection = tauxInfection + 0.5
 
-		if(posY < self.nbCelluleHauteur-2):
-			if (posX >= 2 and matDeTest[posY+2][posX-2].etat == "infecte"): #20
-				tauxInfection = tauxInfection + 0.25
-			if (posX >= 1 and matDeTest[posY+2][posX-1].etat == "infecte"): #21
-				tauxInfection = tauxInfection + 0.5
-			if (posX < self.nbCelluleLargeur and matDeTest[posY+2][posX].etat == "infecte"): #22
-				tauxInfection = tauxInfection + 0.75
-			if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+2][posX+1].etat == "infecte"): #23
-				tauxInfection = tauxInfection + 0.5
-			if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+2][posX+2].etat == "infecte"): #24
-				tauxInfection = tauxInfection + 0.25
+        if(posY < self.nbCelluleHauteur-2):
+            if (posX >= 2 and matDeTest[posY+2][posX-2].etat == "infecte"): #20
+                tauxInfection = tauxInfection + 0.25
+            if (posX >= 1 and matDeTest[posY+2][posX-1].etat == "infecte"): #21
+                tauxInfection = tauxInfection + 0.5
+            if (posX < self.nbCelluleLargeur and matDeTest[posY+2][posX].etat == "infecte"): #22
+                tauxInfection = tauxInfection + 0.75
+            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+2][posX+1].etat == "infecte"): #23
+                tauxInfection = tauxInfection + 0.5
+            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+2][posX+2].etat == "infecte"): #24
+                tauxInfection = tauxInfection + 0.25
 
 
-		if (tauxInfection > 0):
-			print("La cellule  " + repr(posX) + " ; " + repr(posY) + " a un taux d'infection de " + repr(round(tauxInfection,2)))
-			#Defini si la case devient infectées
-			nbAlea = randint(0,100)
-			if (nbAlea < tauxInfection*self.virus.tauxReproduction):
-				self.matCarre[posY][posX].setEtat("infecte")
-				self.matCarre[posY][posX].afficher(self.grille, posX, posY)
-				print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
-				self.nbSain = self.nbSain - 1
-				self.nbInfecte = self.nbInfecte + 1
+        if (tauxInfection > 0):
+            print("La cellule  " + repr(posX) + " ; " + repr(posY) + " a un taux d'infection de " + repr(round(tauxInfection,2)))
+            #Defini si la case devient infectées
+            nbAlea = randint(0,100)
+            if (nbAlea < tauxInfection*self.virus.tauxReproduction):
+                self.matCarre[posY][posX].setEtat("infecte")
+                self.matCarre[posY][posX].afficher(self.grille, posX, posY)
+                print("la cellule " + repr(posX) + " ; " + repr(posY) + " a été infectée.")
+                self.nbSain = self.nbSain - 1
+                self.nbInfecte = self.nbInfecte + 1
 
-	#Propage le virus jour par jour 
+    #Propage le virus jour par jour 
     def propager (self):
         matDeTest = copy.deepcopy(self.matCarre)
         for y in range(self.nbCelluleHauteur):
@@ -290,6 +290,9 @@ class MonThread(threading.Thread):
             compteur.config(text="Jour " + repr(cpt))
             pct = int(grille.nbInfecte*100/(grille.nbInfecte + grille.nbSain))
             pctInfecte.config(text="Infectes: " + repr(pct) + "%")
+            # Arrêt si grille totalement infectée
+            if (pct==100):
+                self.pause()
 
  
     def stop(self):
