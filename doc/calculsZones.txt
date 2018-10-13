@@ -1,0 +1,23 @@
+La population de la zone urbaine (hors Zone Peuplée) doit être de
+moins en moins dense plus l'on approche du bord de la zone.
+On veut qu'au centre, la population soit très dense. Il aura donc
+100% de chance que la case au centre de la zone soit peuplée.
+On veut qu'en bordure de zone une case ai 25% de chance d'être
+peuplée. Si on représente cela par une fonction linéaire on a :
+
+f(x) = ax+b (pourcentage de chance d'être peuplée en fonction de la
+distance de la case au centre de la zone)
+f(0) = 100
+f(rayonZone) = 25
+
+donc
+f(0) = a*0+b = 100
+<=> b = 100
+
+donc
+f(rayonZone) = a*rayonZone+100 = 25
+<=> a*rayonZone = -75
+<=> a = -75/rayonZone
+
+donc
+f(x) = (-75/rayonZone)x + 100
