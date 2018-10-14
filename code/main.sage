@@ -3,7 +3,6 @@
 #https://fr.statista.com/statistiques/472349/repartition-population-groupe-dage-france/
 #https://www.insee.fr/fr/statistiques/1892088?sommaire=1912926
 
-
 from tkinter import *
 from random import *
 from math import sqrt
@@ -11,43 +10,47 @@ import time
 import threading
 import copy
 
+# La classe carré représente un cellule de la grille non peuplée
 class Carre:
     def __init__(self, tailleCellule, etat):
 
         self.etat = etat
         self.tailleCellule = tailleCellule
-        
-        if (self.etat == "mur"):
-            self.couleur = 'black'
-        else: # donc case vide
-            self.couleur = 'white'
-
-    def afficher (self, canvas, x, y):
-        canvas.create_rectangle(x*self.tailleCellule, y*self.tailleCellule, (x*self.tailleCellule)+self.tailleCellule, (y*self.tailleCellule)+self.tailleCellule, fill=self.couleur, width = 1)
+        self.setEtat(etat)
 
     def setEtat (self, etat):
         self.etat = etat;
         if (self.etat == "mur"):
             self.couleur = 'black'
-        else: # donc case vide
+        elif(self.etat == "eau"):
+            self.couleur = 'blue'
+        else: # donc cellule vide
             self.couleur = 'white'
+
+    def afficher (self, canvas, x, y):
+        x0 = x*self.tailleCellule
+        y0 = y*self.tailleCellule
+        x1 = (x*self.tailleCellule)+self.tailleCellule
+        y1 = (y*self.tailleCellule)+self.tailleCellule
+
+        # Taille bordure cellule
+        if (self.tailleCellule > 2):
+            bordure = 1
+        else:
+            bordure = 0
+
+        canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
 
 #END Carre
 
 
+# La classe CarrePopulation représente une cellule peuplée
 class CarrePopulation (Carre):
     def __init__(self, tailleCellule, etat, moyenneAge):
 
         self.tailleCellule = tailleCellule
-        self.etat = etat
         self.moyenneAge = moyenneAge
-
-        if (self.etat == "sain"):
-            self.couleur = 'green'
-        elif (self.etat == "infecte"):
-            self.couleur = 'red'
-        else: # donc case inconnue
-            self.couleur = 'yellow'
+        self.setEtat(etat)
 
     def setEtat (self, etat):
         self.etat = etat
@@ -55,186 +58,16 @@ class CarrePopulation (Carre):
             self.couleur = 'green'
         elif (self.etat == "infecte"):
             self.couleur = 'red'
-        else: # donc case inconnue
+        else: # donc cellule inconnue
             self.couleur = 'yellow'
 
-#END Carre_population
-
-
-class Virus:
-    def __init__(self, label):
-        self.label = label
-        if (self.label == "Peste noire"):
-            self.tauxReproduction = 12.5
-        else:
-            self.tauxReproduction = 5
-
-#END Virus
-
-
-class ZoneUrbaine:
-    def __init__(self, grille, genre):
-        self.genre = genre # (Metropole, Ville, ZonePeuplee, Village)
-        self.posX = randint(0, grille.nbCelluleHauteur)
-        self.posY = randint(0, grille.nbCelluleLargeur)
-
-        if (self.genre == "Metropole"): # Rayon entre 1/3 et 1/2 de la taille maximale de la grille
-            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
-                self.rayon = randint(int(grille.nbCelluleHauteur/3), int(grille.nbCelluleHauteur/2))
-            else:
-                self.rayon = randint(int(grille.nbCelluleLargeur/3), int(grille.nbCelluleLargeur/2))
-        elif (self.genre == "Ville"): # Rayon entre 1/8 et 1/4 de la taille maximale de la grille
-            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
-                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/4))
-            else:
-                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/4))
-        elif (self.genre == "ZonePeuplee"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
-            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
-                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/2))
-            else:
-                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/2))
-        elif (self.genre == "Village"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
-            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
-                self.rayon = randint(int(grille.nbCelluleHauteur/16), int(grille.nbCelluleHauteur/10))
-            else:
-                self.rayon = randint(int(grille.nbCelluleLargeur/16), int(grille.nbCelluleLargeur/10))
-        else: #Zone inconnue
-            self.rayon = 0
-
-    def distanceAuCentre(self, posX, posY):
-        # Distance de A à B = racine((Xb-Xa)^2 + (Yb-Ya)^2)
-        # On prend la valeur absolue car l'orientation dans le repère ne nous interesse pas
-        distance = int(abs(sqrt((posX-self.posX)*(posX-self.posX) + (posY-self.posY)*(posY-self.posY))))
-        return distance
-
-    def contient(self, posX, posY):
-        if (self.distanceAuCentre(posX, posY) <= self.rayon):
-            return True;
-        return False;
-
-    def chevauche(self, zoneUrbaine):
-        distanceZones = zoneUrbaine.distanceAuCentre(self.posX, self.posY)
-        if (distanceZones < self.rayon + zoneUrbaine.rayon):
-            return True
-        return False
-
-#END Vile
-
-
-class Grille:
-    def __init__(self, hauteurEcranPx, largeurEcranPx, nbCelluleHauteur, nbCelluleLargeur, virus, nbPers):
-        print("Génération de la grille...")
-
-        self.nbCelluleHauteur = nbCelluleHauteur
-        self.nbCelluleLargeur = nbCelluleLargeur
-
-        self.tailleCellule = int((hauteurEcranPx-200)/nbCelluleHauteur)
-        if (nbCelluleLargeur*self.tailleCellule > largeurEcranPx):
-            self.tailleCellule = int(largeurEcranPx/nbCelluleLargeur)
-
-        self.nbInfecte = 0
-        self.nbSain = 0
-
-        self.grille = Canvas(root, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
-
-        self.matCarre = []
-
-        self.grille.bind("<Button-1>", self.infecter)
-        self.grille.bind("<Button-2>", self.propagerUneFois)
-        self.grille.bind("<Button-3>", self.guerir)
-        self.grille.pack()
-
-        self.virus = virus
-        self.nbPers = nbPers
-
-        self.zonesUrbaines = self.genererZonesUrbaines()
-
-        #Créé les carrés composant la grille et les range dans une matrice
-        for y in range (0, nbCelluleHauteur):
-            ligne = []
-            for x in range (0, nbCelluleLargeur):
-        
-                estDansUneZoneUrbaine = False
-                # Parcours de toutes les zones urbaines de la grille
-                for i in range (0, len(self.zonesUrbaines)):
-                    zoneUrbaine = self.zonesUrbaines[i]
-                    if (zoneUrbaine.contient(x,y)):
-                        if (zoneUrbaine.genre == "ZonePeuplee"):
-                            if (randint(1,4) == 1): # 1 chance sur 4 qu'un carré soit peuplé dans une zone peuplée
-                                ageMoy = self.genenerAgeMoyen();
-                                ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
-                                self.nbSain = self.nbSain + 1
-                            else:
-                                ligne.append(Carre(self.tailleCellule, "vide"))
-                        else:
-                            probaPop = (-75/zoneUrbaine.rayon)*zoneUrbaine.distanceAuCentre(x,y) + 100 # Calcul expliqué dans le fichier calculsZone.txt
-                            if (randint(0,100) < probaPop): # Plus on est loin du centre moins la population est dense
-                                ageMoy = self.genenerAgeMoyen()
-                                ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
-                                self.nbSain = self.nbSain + 1
-                            else:
-                                ligne.append(Carre(self.tailleCellule, "vide"))
-                        estDansUneZoneUrbaine = True
-                        break # Pas besoin de parcourir les autres zones car une case ne peut être que dans une seule zone
-
-                if(not(estDansUneZoneUrbaine)):
-                    if (randint(1,8) == 1): # 1 chance sur 8 qu'un carré soit peuplé si il est en dehors d'une zone urbaine
-                        ageMoy = self.genenerAgeMoyen()
-                        ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
-                        self.nbSain = self.nbSain + 1
-                    else:
-                        ligne.append(Carre(self.tailleCellule, "vide"))
-
-            self.matCarre.append(ligne)
-        print("Grille générée !")
-
-    def genererZonesUrbaines(self):
-        zonesUrbaines = []
-
-        if(randint(1,8) == 1): # 1 chance sur 8 qu'il est une métropole
-            metropole = ZoneUrbaine(self,"Metropole")
-            zonesUrbaines.append(metropole)
-        for i in range (0, randint(1,3)): # Entre 1 et 2 villes
-            while(True): # Créer une nouvelle zone tant qu'elle en chevauche une autre
-                zone = ZoneUrbaine(self,"Ville")
-                nbZonesChevauchees = 0
-                for i in range (0, len(zonesUrbaines)):
-                    if (zone.chevauche(zonesUrbaines [i])):
-                        nbZonesChevauchees = nbZonesChevauchees + 1
-                if (nbZonesChevauchees == 0):
-                    zonesUrbaines.append(zone)
-                    break
-        for i in range (0, randint(0,2)): # Entre 0 et 2 zones peuplées
-            while(True): # Créer une nouvelle zone tant qu'elle en chevauche une autre
-                zone = ZoneUrbaine(self,"ZonePeuplee")
-                nbZonesChevauchees = 0
-                for i in range (0, len(zonesUrbaines)):
-                    if (zone.chevauche(zonesUrbaines [i])):
-                        nbZonesChevauchees = nbZonesChevauchees + 1
-                if (nbZonesChevauchees == 0):
-                    zonesUrbaines.append(zone)
-                    break
-        for i in range (0, randint(3,7)): # Entre 3 et 7 villages
-            while(True): # Créer une nouvelle zone tant qu'elle en chevauche une autre
-                zone = ZoneUrbaine(self,"Village")
-                nbZonesChevauchees = 0
-                for i in range (0, len(zonesUrbaines)):
-                    if (zone.chevauche(zonesUrbaines [i])):
-                        nbZonesChevauchees = nbZonesChevauchees + 1
-                if (nbZonesChevauchees == 0):
-                    zonesUrbaines.append(zone)
-                    break
-
-
-        print(repr(len(zonesUrbaines)) + " zones urbaines :")
-        for i in range (0, len(zonesUrbaines)):
-            print("La zone " + repr(i) + " est un(e) " + zonesUrbaines[i].genre + " de centre (" + repr(zonesUrbaines[i].posX) + "," + repr(zonesUrbaines[i].posY) + ") et de rayon " + repr(zonesUrbaines[i].rayon))
-
-        return zonesUrbaines
-
-    def genenerAgeMoyen(self):
+    # gerererAgeMoyen renvoie un age moyen calculé à partir du nombre de personnes
+    # représentées par une cellule et les statistiques trouvée sur le site :
+    # https://fr.statista.com/statistiques/472349/repartition-population-groupe-dage-france/
+    @staticmethod
+    def genenerAgeMoyen(nbPers):
         ageMoy = 0
-        for i in range (0, self.nbPers):
+        for i in range (0, nbPers):
             nbAlea = uniform(0, 100)
             if (nbAlea < 18.2):
                 age = randint(0,14)
@@ -267,18 +100,255 @@ class Grille:
 
             ageMoy += age
 
-        ageMoy = round(ageMoy/self.nbPers)
+        ageMoy = round(ageMoy/nbPers)
         return ageMoy
 
-    #affiche la grille
+#END Carre_population
+
+
+# La classe Virus représente le virus à propager
+class Virus:
+    def __init__(self, label):
+        self.label = label
+        if (self.label == "Peste noire"):
+            self.tauxReproduction = 12.5
+        else: # Virus inconnu
+            self.tauxReproduction = 5
+
+#END Virus
+
+
+# La classe zone urbaine représente des regroupements de population sur la grille
+class ZoneUrbaine:
+    def __init__(self, grille, genre):
+        self.genre = genre # (Metropole, Ville, ZonePeuplee, Village)
+        self.posX = randint(0, grille.nbCelluleHauteur)
+        self.posY = randint(0, grille.nbCelluleLargeur)
+
+        if (self.genre == "Metropole"): # Rayon entre 1/3 et 1/2 de la taille maximale de la grille
+            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+                self.rayon = randint(int(grille.nbCelluleHauteur/3), int(grille.nbCelluleHauteur/2))
+            else:
+                self.rayon = randint(int(grille.nbCelluleLargeur/3), int(grille.nbCelluleLargeur/2))
+        elif (self.genre == "Ville"): # Rayon entre 1/8 et 1/4 de la taille maximale de la grille
+            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/4))
+            else:
+                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/4))
+        elif (self.genre == "ZonePeuplee"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
+            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/2))
+            else:
+                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/2))
+        elif (self.genre == "Village"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
+            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+                self.rayon = randint(int(grille.nbCelluleHauteur/16), int(grille.nbCelluleHauteur/10))
+            else:
+                self.rayon = randint(int(grille.nbCelluleLargeur/16), int(grille.nbCelluleLargeur/10))
+        else: #Zone inconnue
+            self.rayon = 1
+        # Rayon < 1 interdit
+        if (self.rayon == 0):
+            self.rayon = 1
+
+    # Renvoie la distance du point (posX, posY) au centre de la zone courante
+    def distanceAuCentre(self, posX, posY):
+        # Distance de A à B = racine((Xb-Xa)^2 + (Yb-Ya)^2)
+        # On prend la valeur absolue car l'orientation dans le repère ne nous interesse pas
+        distance = int(abs(sqrt((posX-self.posX)*(posX-self.posX) + (posY-self.posY)*(posY-self.posY))))
+        return distance
+
+    # Renvoie True si le point (posX, posY) appartient à la zone courante
+    def contient(self, posX, posY):
+        if (self.distanceAuCentre(posX, posY) <= self.rayon):
+            return True;
+        return False;
+
+    # Renvoie True si la zone courante chevauche la zone zoneUrbaine
+    def chevauche(self, zoneUrbaine):
+        distanceZones = zoneUrbaine.distanceAuCentre(self.posX, self.posY)
+        if (distanceZones < self.rayon + zoneUrbaine.rayon):
+            return True
+        return False
+
+#END zoneUrbaine
+
+
+# La classe grille représente la carte
+class Grille:
+    def __init__(self, fenetre, nbCelluleHauteur, nbCelluleLargeur, virus, nbPers):
+        print("Génération de la grille...")
+
+        # Initialisation des attributs de la grille
+        self.nbCelluleHauteur = nbCelluleHauteur
+        self.nbCelluleLargeur = nbCelluleLargeur
+        self.virus = virus
+        self.nbPers = nbPers
+        self.nbInfecte = 0
+        self.nbSain = 0
+
+        hauteurEcranPx = fenetre.winfo_screenheight()
+        largeurEcranPx = fenetre.winfo_screenwidth()
+        self.tailleCellule = int((hauteurEcranPx-200)/nbCelluleHauteur)
+        if (nbCelluleLargeur*self.tailleCellule > largeurEcranPx):
+            self.tailleCellule = int(largeurEcranPx/nbCelluleLargeur)
+
+        self.grille = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
+
+        self.matCarre = []
+
+        # Affectation des actions de la souris
+        self.grille.bind("<Button-1>", self.infecterManu)
+        self.grille.bind("<Button-2>", self.propagerUneFois)
+        self.grille.bind("<Button-3>", self.guerirManu)
+        self.grille.pack()
+
+        # Création des zones urbaines
+        self.zonesUrbaines = self.genererZonesUrbaines()
+
+        #Crée les carrés composant la grille et les range dans une matrice
+        for y in range (0, nbCelluleHauteur):
+            ligne = []
+            for x in range (0, nbCelluleLargeur):
+                estDansUneZoneUrbaine = False
+
+                # Parcours de toutes les zones urbaines de la grille
+                for i in range (0, len(self.zonesUrbaines)):
+                    zoneUrbaine = self.zonesUrbaines[i]
+                    if (zoneUrbaine.contient(x,y)):
+                        if (zoneUrbaine.genre == "ZonePeuplee"):
+                            if (randint(1,4) == 1): # 1 chance sur 4 qu'un carré soit peuplé dans une zone peuplée
+                                ageMoy = CarrePopulation.genenerAgeMoyen(self.nbPers)
+                                ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
+                                self.nbSain = self.nbSain + 1
+                            else:
+                                ligne.append(Carre(self.tailleCellule, "vide"))
+                        else:
+                            probaPop = (-75/zoneUrbaine.rayon)*zoneUrbaine.distanceAuCentre(x,y) + 100 # Calcul expliqué dans le fichier calculsZone.txt
+                            if (randint(0,100) < probaPop): # Plus on est loin du centre moins la population est dense
+                                ageMoy = CarrePopulation.genenerAgeMoyen(self.nbPers)
+                                ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
+                                self.nbSain = self.nbSain + 1
+                            else:
+                                ligne.append(Carre(self.tailleCellule, "vide"))
+                        estDansUneZoneUrbaine = True
+                        break # Pas besoin de parcourir les autres zones car une cellule ne peut être que dans une seule zone
+
+                if(not(estDansUneZoneUrbaine)):
+                    if (randint(1,8) == 1): # 1 chance sur 8 qu'un carré soit peuplé si il est en dehors d'une zone urbaine
+                        ageMoy = CarrePopulation.genenerAgeMoyen(self.nbPers)
+                        ligne.append(CarrePopulation(self.tailleCellule, "sain", ageMoy))
+                        self.nbSain = self.nbSain + 1
+                    else:
+                        ligne.append(Carre(self.tailleCellule, "vide"))
+
+            self.matCarre.append(ligne)
+        if(randint(0,2)): # 2 chance sur 3 d'avoir un fleuve
+            self.genererFleuve()
+        print("Grille générée !")
+
+    # genererZonesUrbaines génère aléatoirement des zones urbaines dans la grille
+    def genererZonesUrbaines(self):
+        zonesUrbaines = []
+
+        if(randint(1,6) == 1): # 1 chance sur 6 qu'il est une métropole
+            metropole = ZoneUrbaine(self,"Metropole")
+            zonesUrbaines.append(metropole)
+        for i in range (0, randint(2,4)): # Entre 2 et 4 villes
+            for j in range (0,10): # Créer une nouvelle zone tant qu'elle en chevauche une autre (10 essai max avant abandon)
+                zone = ZoneUrbaine(self,"Ville")
+                nbZonesChevauchees = 0
+                for i in range (0, len(zonesUrbaines)):
+                    if (zone.chevauche(zonesUrbaines [i])):
+                        nbZonesChevauchees = nbZonesChevauchees + 1
+                if (nbZonesChevauchees == 0):
+                    zonesUrbaines.append(zone)
+                    break
+        for i in range (0, randint(0,2)): # Entre 0 et 2 zones peuplées
+            for j in range (0,10): # Créer une nouvelle zone tant qu'elle en chevauche une autre (10 essai max avant abandon)
+                zone = ZoneUrbaine(self,"ZonePeuplee")
+                nbZonesChevauchees = 0
+                for i in range (0, len(zonesUrbaines)):
+                    if (zone.chevauche(zonesUrbaines [i])):
+                        nbZonesChevauchees = nbZonesChevauchees + 1
+                if (nbZonesChevauchees == 0):
+                    zonesUrbaines.append(zone)
+                    break
+        for i in range (0, randint(5,10)): # Entre 5 et 10 villages
+            for j in range (0,10): # Créer une nouvelle zone tant qu'elle en chevauche une autre (10 essai max avant abandon)
+                zone = ZoneUrbaine(self,"Village")
+                nbZonesChevauchees = 0
+                for i in range (0, len(zonesUrbaines)):
+                    if (zone.chevauche(zonesUrbaines [i])):
+                        nbZonesChevauchees = nbZonesChevauchees + 1
+                if (nbZonesChevauchees == 0):
+                    zonesUrbaines.append(zone)
+                    break
+
+
+        print(repr(len(zonesUrbaines)) + " zones urbaines :")
+        for i in range (0, len(zonesUrbaines)):
+            print("La zone " + repr(i) + " est un(e) " + zonesUrbaines[i].genre + " de centre (" + repr(zonesUrbaines[i].posX) + "," + repr(zonesUrbaines[i].posY) + ") et de rayon " + repr(zonesUrbaines[i].rayon))
+
+        return zonesUrbaines
+
+    # genererFleuve génère un fleuve aléatoire dans la grille
+    def genererFleuve(self):
+        print("Création d'un fleuve...")
+        # Taille minimal pour générer un fleuve
+        if(self.nbCelluleLargeur < 30 or self.nbCelluleHauteur < 30):
+            return
+        # Largueur du fleuve maximum 1/10 de la taille max de la grille
+        # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
+        if (self.nbCelluleHauteur < self.nbCelluleLargeur):
+            largeur = randint(3,int(self.nbCelluleHauteur/10))
+        else:
+            largeur = randint(3,int(self.nbCelluleLargeur/10))
+
+        # 1 chance sur 2 pour que le fleuve parte du haut ou de la gauche de la grille
+        if(randint(0,1)):
+            posX = 0 # Départ à gauche
+            posY = randint(5, self.nbCelluleHauteur-5) # Le fleuve ne peut pas partir des autres bords
+            # Tant que le fleuve n'atteind pas un bord
+            while (posX < self.nbCelluleLargeur and posY > 0 and posY < self.nbCelluleHauteur):
+                # On créer une nouvelle cellule du fleuve
+                self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
+                # On étend la largeur du fleuve
+                for i in range (1,int(largeur/2)+1):
+                    if (posY-i >= 0):
+                        self.matCarre[posY-i][posX] = Carre(self.tailleCellule, "eau")
+                    if (posY+i < self.nbCelluleHauteur):
+                        self.matCarre[posY+i][posX] = Carre(self.tailleCellule, "eau")
+                # Position de la prochaine cellule du fleuve
+                posX = posX+1
+                posY = randint(posY-1, posY+1)
+        else:
+            posY = 0 # Départ à droite
+            posX = randint(5, self.nbCelluleLargeur-5) # Le fleuve ne peut pas partir des autres bords
+            # Tant que le fleuve n'atteind pas un bord
+            while (posY < self.nbCelluleHauteur and posX > 0 and posX < self.nbCelluleLargeur):
+                # On créer une nouvelle cellule du fleuve
+                self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
+                # On étend la largeur du fleuve
+                for i in range (1,int(largeur/2)+1):
+                    if (posX-i >= 0):
+                        self.matCarre[posY][posX-i] = Carre(self.tailleCellule, "eau")
+                    if (posX+i < self.nbCelluleLargeur):
+                        self.matCarre[posY][posX+i] = Carre(self.tailleCellule, "eau")
+                # Position de la prochaine cellule du fleuve
+                posX = randint(posX-1, posX+1)
+                posY = posY+1
+        print("Fleuve de largeur " + repr(largeur) + " généré.")
+
+    # Affiche la grille
     def afficher(self):
         for y in range(len(self.matCarre)):
             for x in range(len(self.matCarre[0])):
                 self.matCarre[y][x].afficher(self.grille, x, y)
 
 
-    #infecte la case lorsqu'on clique gauche dessus
-    def infecter(self, event):
+    # Infecte la cellule lorsqu'on clique gauche dessus
+    def infecterManu(self, event):
         x = event.x - (event.x%self.tailleCellule)
         y = event.y - (event.y%self.tailleCellule)
 
@@ -292,8 +362,8 @@ class Grille:
             self.nbSain = self.nbSain - 1
             self.nbInfecte = self.nbInfecte + 1
 
-    #soigne la case lorsqu'on clique droit dessus
-    def guerir(self, event):
+    # Soigne la cellule lorsqu'on clique droit dessus
+    def guerirManu(self, event):
         x = event.x -(event.x%self.tailleCellule)
         y = event.y -(event.y%self.tailleCellule)
 
@@ -307,8 +377,8 @@ class Grille:
             self.nbSain = self.nbSain + 1
             self.nbInfecte = self.nbInfecte - 1
 
-    def propagerTauxReproduction (self, matDeTest,posX, posY):
-
+    # Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest
+    def soumettreAuVirus (self, matDeTest,posX, posY):
         tauxInfection = 0.0
         # 01 02 03 04 05 #
         # 06 07 08 09 10 #
@@ -316,7 +386,7 @@ class Grille:
         # 15 16 17 18 19 #
         # 20 21 22 23 24 #
 
-        #Récupère le nombre de case inféctées pour chaque case et ajoute si c'est le cas un taux.
+        #Récupère le nombre de cellule inféctées pour chaque cellule et ajoute si c'est le cas un taux.
         if(posY >= 2):
             if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
                 tauxInfection = tauxInfection + 0.25
@@ -377,7 +447,7 @@ class Grille:
 
 
         if (tauxInfection > 0):
-            #Defini si la case devient infectée
+            #Defini si la cellule devient infectée
             nbAlea = randint(0,100)
             if (nbAlea < tauxInfection*self.virus.tauxReproduction):
                 self.matCarre[posY][posX].setEtat("infecte")
@@ -385,19 +455,22 @@ class Grille:
                 self.nbSain = self.nbSain - 1
                 self.nbInfecte = self.nbInfecte + 1
 
-    #Propage le virus jour par jour 
+    # Propage le virus jour par jour automatiquement
     def propager (self):
         matDeTest = copy.deepcopy(self.matCarre)
         for y in range(self.nbCelluleHauteur):
             for x in range(self.nbCelluleLargeur):
                 if (self.matCarre[y][x].etat == "sain"):
-                    self.propagerTauxReproduction(matDeTest, x, y)
+                    self.soumettreAuVirus(matDeTest, x, y)
 
-    #Propage le virus d'un jour                
+    # Propage le virus d'un jour                
     def propagerUneFois (self, event):
         self.propager();
 
+# END Grille
 
+
+# La classe MonThread permet de lancer un second processus
 class MonThread(threading.Thread):
     def __init__(self, grille, compteur):
         threading.Thread.__init__(self)
@@ -434,34 +507,36 @@ class MonThread(threading.Thread):
     def continu(self):
         self._pause = False
 
-#END Grille
+#END MonThread
+
 
 ##### MAIN #####
 
-#Création de la fenêtre
+# Création de la fenêtre
 root = Tk()
 root.title('Propagation virus')
 
-#Création compteur de jour
+# Création compteur de jour
 compteur = Label(root, text="Jour 0")
 compteur.pack()
 
-#Création % inféctées
+# Affichage du pourcentage de cellules inféctées
 pctInfecte = Label(root, text="Infecte : 0%")
 pctInfecte.pack()
 
-#Création de la grille représentative de la population
-#Paramètres = Taille en pixel, largeur, longueur, virus, nb de personne dans un carré
-grille = Grille(root.winfo_screenheight(), root.winfo_screenwidth(), 100, 100, Virus("Peste noire"), 5)
+# Création de la grille représentative de la population
+# Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
+grille = Grille(root, 50, 50, Virus("Peste noire"), 5)
 grille.afficher()
 
-#Création d'un thread pour la propagation
+# Création d'un thread pour la propagation
 thread = MonThread(grille, compteur)
 thread.start()
 
+# Arrête le processus créé par le thread lorsque la fenêtre est fermée
 root.protocol("WM_DELETE_WINDOW", thread.stop)
 
-#Creation des boutons
+# Creation des boutons
 boutonStart = Button(root, text="Start", command=thread.continu)
 boutonStart.pack()
 boutonPause = Button(root, text="Pause", command=thread.pause)
@@ -469,5 +544,5 @@ boutonPause.pack()
 boutonStop = Button(root, text="Stop", command=thread.stop)
 boutonStop.pack()
 
-#Lancement de la fenêtre
+# Lancement de la fenêtre
 root.mainloop()
