@@ -171,10 +171,50 @@ class ZoneUrbaine:
             return True
         return False
 
-#END zoneUrbaine
+# END ZoneUrbaine
 
 
-# La classe grille représente la carte
+# La classe Deplacement représente un moyen de transport allant d'un point à un autre
+class Deplacement:
+    def __init__(self, etat, posX1, posY1, posX2, posY2, tailleCellule):
+        self.setEtat(etat)
+        self.posX1 = posX1
+        self.posY1 = posY1
+        self.posX2 = posX2
+        self.posY2 = posY2
+        self.tailleCellule = tailleCellule
+
+    def setEtat (self, etat):
+        self.etat = etat
+        if (self.etat == "pont"):
+            self.couleur = 'lime'
+        elif (self.etat == "train"):
+            self.couleur = 'orange'
+        else: # donc cellule inconnue
+            self.couleur = 'yellow'
+
+    def afficher (self, canvas):
+        x0 = self.posX1*self.tailleCellule + 2
+        y0 = self.posY1*self.tailleCellule + 2
+        x1 = (self.posX1*self.tailleCellule)+self.tailleCellule - 2
+        y1 = (self.posY1*self.tailleCellule)+self.tailleCellule - 2
+        canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
+
+        x0 = self.posX2*self.tailleCellule + 2
+        y0 = self.posY2*self.tailleCellule + 2
+        x1 = (self.posX2*self.tailleCellule)+self.tailleCellule - 2
+        y1 = (self.posY2*self.tailleCellule)+self.tailleCellule - 2
+        canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
+        
+        x0 = self.posX1*self.tailleCellule + self.tailleCellule/2
+        y0 = self.posY1*self.tailleCellule + self.tailleCellule/2
+        x1 = self.posX2*self.tailleCellule + self.tailleCellule/2
+        y1 = self.posY2*self.tailleCellule + self.tailleCellule/2
+        canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=2)
+
+# END Deplacement
+
+# La classe Grille représente la carte
 class Grille:
     def __init__(self, fenetre, nbCelluleHauteur, nbCelluleLargeur, virus, nbPers):
         print("Génération de la grille...")
@@ -196,6 +236,8 @@ class Grille:
         self.grille = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
         self.matCarre = []
+
+        self.deplacements = []
 
         # Affectation des actions de la souris
         self.grille.bind("<Button-1>", self.infecterManu)
@@ -245,6 +287,9 @@ class Grille:
             self.matCarre.append(ligne)
         if(randint(0,2)): # 2 chance sur 3 d'avoir un fleuve
             self.genererFleuve()
+
+        self.genererDeplacements()
+
         print("Grille générée !")
 
     # genererZonesUrbaines génère aléatoirement des zones urbaines dans la grille
@@ -340,11 +385,21 @@ class Grille:
                 posY = posY+1
         print("Fleuve de largeur " + repr(largeur) + " généré.")
 
+    # Génère tous les déplacements de la grille
+    def genererDeplacements(self):
+        self.deplacements.append(Deplacement("train", randint(0,self.nbCelluleLargeur), randint(0,self.nbCelluleHauteur), randint(0,self.nbCelluleLargeur), randint(0,self.nbCelluleHauteur), self.tailleCellule))
+
+    # Afficher tous les déplacements de la grille
+    def afficherDeplacements(self):
+        for i in range (0, len(self.deplacements)):
+            self.deplacements[i].afficher(self.grille)
+
     # Affiche la grille
     def afficher(self):
         for y in range(len(self.matCarre)):
             for x in range(len(self.matCarre[0])):
                 self.matCarre[y][x].afficher(self.grille, x, y)
+        self.afficherDeplacements()
 
 
     # Infecte la cellule lorsqu'on clique gauche dessus
@@ -358,6 +413,7 @@ class Grille:
         if(self.matCarre[j][i].etat == "sain"):
             self.matCarre[j][i].setEtat("infecte")
             self.matCarre[j][i].afficher(self.grille, i, j)
+            self.afficherDeplacements()
             print("la cellule " + repr(i) + " ; " + repr(j) + " a été infectée.")
             self.nbSain = self.nbSain - 1
             self.nbInfecte = self.nbInfecte + 1
@@ -373,6 +429,7 @@ class Grille:
         if(self.matCarre[j][i].etat == "infecte"):
             self.matCarre[j][i].setEtat("sain")
             self.matCarre[j][i].afficher(self.grille, i, j)
+            self.afficherDeplacements()
             print("la cellule " + repr(i) + " ; " + repr(j) + " a été guérie.")
             self.nbSain = self.nbSain + 1
             self.nbInfecte = self.nbInfecte - 1
@@ -462,6 +519,7 @@ class Grille:
             for x in range(self.nbCelluleLargeur):
                 if (self.matCarre[y][x].etat == "sain"):
                     self.soumettreAuVirus(matDeTest, x, y)
+        self.afficherDeplacements()
 
     # Propage le virus d'un jour                
     def propagerUneFois (self, event):
@@ -526,7 +584,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 50, 50, Virus("Peste noire"), 5)
+grille = Grille(root, 100, 100, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
