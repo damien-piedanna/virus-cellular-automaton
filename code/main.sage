@@ -206,11 +206,15 @@ class Deplacement:
         y1 = (self.posY2*self.tailleCellule)+self.tailleCellule - 2
         canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
         
-        x0 = self.posX1*self.tailleCellule + self.tailleCellule/2
-        y0 = self.posY1*self.tailleCellule + self.tailleCellule/2
-        x1 = self.posX2*self.tailleCellule + self.tailleCellule/2
-        y1 = self.posY2*self.tailleCellule + self.tailleCellule/2
-        canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=2)
+        x0 = self.posX1*self.tailleCellule + int(self.tailleCellule/2)
+        y0 = self.posY1*self.tailleCellule + int(self.tailleCellule/2)
+        x1 = self.posX2*self.tailleCellule + int(self.tailleCellule/2)
+        y1 = self.posY2*self.tailleCellule + int(self.tailleCellule/2)
+        if (self.etat == "pont"):
+            epaisseur = self.tailleCellule
+        else:
+            epaisseur = 2
+        canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
 
 # END Deplacement
 
@@ -343,12 +347,12 @@ class Grille:
         # Taille minimal pour générer un fleuve
         if(self.nbCelluleLargeur < 30 or self.nbCelluleHauteur < 30):
             return
-        # Largueur du fleuve maximum 1/10 de la taille max de la grille
+        # Largueur du fleuve maximum 1/15 de la taille max de la grille
         # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
         if (self.nbCelluleHauteur < self.nbCelluleLargeur):
-            largeur = randint(3,int(self.nbCelluleHauteur/10))
+            largeur = randint(3,int(self.nbCelluleHauteur/15))
         else:
-            largeur = randint(3,int(self.nbCelluleLargeur/10))
+            largeur = randint(3,int(self.nbCelluleLargeur/15))
 
         # 1 chance sur 2 pour que le fleuve parte du haut ou de la gauche de la grille
         if(randint(0,1)):
@@ -387,7 +391,14 @@ class Grille:
 
     # Génère tous les déplacements de la grille
     def genererDeplacements(self):
-        self.deplacements.append(Deplacement("train", randint(0,self.nbCelluleLargeur), randint(0,self.nbCelluleHauteur), randint(0,self.nbCelluleLargeur), randint(0,self.nbCelluleHauteur), self.tailleCellule))
+        # Génère les lignes de train
+        for i in range (0, len(self.zonesUrbaines)-1):
+            if ((self.zonesUrbaines[i].genre == "Ville" or self.zonesUrbaines[i].genre == "Metropole") and (self.zonesUrbaines[i+1].genre == "Ville" or self.zonesUrbaines[i+1].genre == "Metropole")):
+                centerX = self.zonesUrbaines[i].posX
+                centerY = self.zonesUrbaines[i].posY
+                centerX1 = self.zonesUrbaines[i+1].posX
+                centerY1 = self.zonesUrbaines[i+1].posY
+                self.deplacements.append(Deplacement("train", centerX, centerY, centerX1, centerY1, self.tailleCellule))
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
