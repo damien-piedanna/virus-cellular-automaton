@@ -135,16 +135,16 @@ class ZoneUrbaine:
                 self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/4))
             else:
                 self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/4))
-        elif (self.genre == "ZonePeuplee"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
-            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
-                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/2))
-            else:
-                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/2))
         elif (self.genre == "Village"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
             if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
                 self.rayon = randint(int(grille.nbCelluleHauteur/16), int(grille.nbCelluleHauteur/10))
             else:
                 self.rayon = randint(int(grille.nbCelluleLargeur/16), int(grille.nbCelluleLargeur/10))
+        elif (self.genre == "ZonePeuplee"): # Rayon entre 1/8 et 1/2 de la taille maximale de la grille
+            if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+                self.rayon = randint(int(grille.nbCelluleHauteur/8), int(grille.nbCelluleHauteur/2))
+            else:
+                self.rayon = randint(int(grille.nbCelluleLargeur/8), int(grille.nbCelluleLargeur/2))
         else: #Zone inconnue
             self.rayon = 1
         # Rayon < 1 interdit
@@ -171,6 +171,7 @@ class ZoneUrbaine:
             return True
         return False
 
+
 # END ZoneUrbaine
 
 
@@ -188,8 +189,12 @@ class Deplacement:
         self.etat = etat
         if (self.etat == "pont"):
             self.couleur = 'lime'
-        elif (self.etat == "train"):
+        elif (self.etat == "route"):
+            self.couleur = 'brown'
+        elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
+        elif (self.etat == "ligneAerienne"):
+            self.couleur = 'pink'
         else: # donc cellule inconnue
             self.couleur = 'yellow'
 
@@ -210,10 +215,11 @@ class Deplacement:
         y0 = self.posY1*self.tailleCellule + int(self.tailleCellule/2)
         x1 = self.posX2*self.tailleCellule + int(self.tailleCellule/2)
         y1 = self.posY2*self.tailleCellule + int(self.tailleCellule/2)
+        
+        epaisseur = 3
         if (self.etat == "pont"):
             epaisseur = self.tailleCellule
-        else:
-            epaisseur = 2
+
         canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
 
 # END Deplacement
@@ -313,9 +319,9 @@ class Grille:
                 if (nbZonesChevauchees == 0):
                     zonesUrbaines.append(zone)
                     break
-        for i in range (0, randint(0,2)): # Entre 0 et 2 zones peuplées
+        for i in range (0, randint(5,10)): # Entre 5 et 10 villages
             for j in range (0,10): # Créer une nouvelle zone tant qu'elle en chevauche une autre (10 essai max avant abandon)
-                zone = ZoneUrbaine(self,"ZonePeuplee")
+                zone = ZoneUrbaine(self,"Village")
                 nbZonesChevauchees = 0
                 for i in range (0, len(zonesUrbaines)):
                     if (zone.chevauche(zonesUrbaines [i])):
@@ -323,9 +329,9 @@ class Grille:
                 if (nbZonesChevauchees == 0):
                     zonesUrbaines.append(zone)
                     break
-        for i in range (0, randint(5,10)): # Entre 5 et 10 villages
+        for i in range (0, randint(0,2)): # Entre 0 et 2 zones peuplées
             for j in range (0,10): # Créer une nouvelle zone tant qu'elle en chevauche une autre (10 essai max avant abandon)
-                zone = ZoneUrbaine(self,"Village")
+                zone = ZoneUrbaine(self,"ZonePeuplee")
                 nbZonesChevauchees = 0
                 for i in range (0, len(zonesUrbaines)):
                     if (zone.chevauche(zonesUrbaines [i])):
@@ -350,9 +356,9 @@ class Grille:
         # Largueur du fleuve maximum 1/15 de la taille max de la grille
         # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
         if (self.nbCelluleHauteur < self.nbCelluleLargeur):
-            largeur = randint(3,int(self.nbCelluleHauteur/15))
+            largeur = randint(3,int(self.nbCelluleHauteur/10))
         else:
-            largeur = randint(3,int(self.nbCelluleLargeur/15))
+            largeur = randint(3,int(self.nbCelluleLargeur/10))
 
         # 1 chance sur 2 pour que le fleuve parte du haut ou de la gauche de la grille
         if(randint(0,1)):
@@ -362,12 +368,18 @@ class Grille:
             while (posX < self.nbCelluleLargeur and posY > 0 and posY < self.nbCelluleHauteur):
                 # On créer une nouvelle cellule du fleuve
                 self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
+
+                # Création des ponts
+                if(not(randint(0,10)) and posY+int(largeur/2)+1 < self.nbCelluleHauteur and posY-int(largeur/2)-1 > 0):
+                    self.deplacements.append(Deplacement("pont", posX, posY+int(largeur/2)+1, posX, posY-int(largeur/2)-1, self.tailleCellule))
+
                 # On étend la largeur du fleuve
                 for i in range (1,int(largeur/2)+1):
                     if (posY-i >= 0):
                         self.matCarre[posY-i][posX] = Carre(self.tailleCellule, "eau")
                     if (posY+i < self.nbCelluleHauteur):
                         self.matCarre[posY+i][posX] = Carre(self.tailleCellule, "eau")
+
                 # Position de la prochaine cellule du fleuve
                 posX = posX+1
                 posY = randint(posY-1, posY+1)
@@ -378,12 +390,18 @@ class Grille:
             while (posY < self.nbCelluleHauteur and posX > 0 and posX < self.nbCelluleLargeur):
                 # On créer une nouvelle cellule du fleuve
                 self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
+
+                # Création des ponts
+                if(not(randint(0,10)) and posX+int(largeur/2)+1 < self.nbCelluleLargeur and posX-int(largeur/2)-1 > 0):
+                    self.deplacements.append(Deplacement("pont", posX+int(largeur/2)+1, posY, posX-int(largeur/2)-1, posY, self.tailleCellule))
+
                 # On étend la largeur du fleuve
                 for i in range (1,int(largeur/2)+1):
                     if (posX-i >= 0):
                         self.matCarre[posY][posX-i] = Carre(self.tailleCellule, "eau")
                     if (posX+i < self.nbCelluleLargeur):
                         self.matCarre[posY][posX+i] = Carre(self.tailleCellule, "eau")
+
                 # Position de la prochaine cellule du fleuve
                 posX = randint(posX-1, posX+1)
                 posY = posY+1
@@ -391,14 +409,18 @@ class Grille:
 
     # Génère tous les déplacements de la grille
     def genererDeplacements(self):
-        # Génère les lignes de train
         for i in range (0, len(self.zonesUrbaines)-1):
+            centerX = self.zonesUrbaines[i].posX
+            centerY = self.zonesUrbaines[i].posY
+            centerX1 = self.zonesUrbaines[i+1].posX
+            centerY1 = self.zonesUrbaines[i+1].posY
+            # Voies ferrées
             if ((self.zonesUrbaines[i].genre == "Ville" or self.zonesUrbaines[i].genre == "Metropole") and (self.zonesUrbaines[i+1].genre == "Ville" or self.zonesUrbaines[i+1].genre == "Metropole")):
-                centerX = self.zonesUrbaines[i].posX
-                centerY = self.zonesUrbaines[i].posY
-                centerX1 = self.zonesUrbaines[i+1].posX
-                centerY1 = self.zonesUrbaines[i+1].posY
-                self.deplacements.append(Deplacement("train", centerX, centerY, centerX1, centerY1, self.tailleCellule))
+                self.deplacements.append(Deplacement("voieFerree", centerX, centerY, centerX1, centerY1, self.tailleCellule))
+
+            # Ponts
+
+
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
@@ -595,7 +617,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 100, 100, Virus("Peste noire"), 5)
+grille = Grille(root, 30, 30, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
