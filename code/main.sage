@@ -106,12 +106,32 @@ class CarrePopulation (Carre):
 #END Carre_population
 
 
+
 # La classe Virus représente le virus à propager
 class Virus:
     def __init__(self, label):
         self.label = label
         if (self.label == "Peste noire"):
-            self.tauxReproduction = 12.5
+            self.tauxReproduction = 15
+
+        elif (self.label == "Rougeole"):
+            self.tauxReproduction = 12
+
+        elif (self.label == "Coqueluche"):
+            self.tauxReproduction = 10
+
+        elif (self.label == "Rougeole"):
+            self.tauxReproduction = 8
+
+        elif (self.label == "Variole"):
+            self.tauxReproduction = 6
+
+        elif (self.label == "VIH"):
+            self.tauxReproduction = 4
+
+        elif (self.label == "Grippe"):
+            self.tauxReproduction = 2  
+
         else: # Virus inconnu
             self.tauxReproduction = 5
 
@@ -224,6 +244,72 @@ class Deplacement:
 
 # END Deplacement
 
+class Position:
+    def __init__(self, posX, posY):
+        self.posX = posX
+        self.posY = posY
+
+# END Position
+
+
+# Classe Fleuve représente un fleuve
+class Fleuve:
+    def __init__(self, grille):
+        print("Création d'un fleuve...")
+        self.parcours = []
+        # Largueur du fleuve maximum 1/10 de la taille max de la grille
+        # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
+        if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
+            self.largeur = randint(3,int(grille.nbCelluleHauteur/10))
+        else:
+            self.largeur = randint(3,int(grille.nbCelluleLargeur/10))
+
+        # 1 chance sur 2 pour que le fleuve parte du haut ou de la gauche de la grille
+        if(randint(0,1)):
+            self.departAGauche = True
+            posX = 0 # Départ à gauche
+            posY = randint(5, grille.nbCelluleHauteur-5) # Le fleuve ne peut pas partir des autres bords
+            # Tant que le fleuve n'atteind pas un bord
+            while (posX < grille.nbCelluleLargeur and posY > 0 and posY < grille.nbCelluleHauteur):
+                # On créer une nouvelle cellule du fleuve
+                grille.matCarre[posY][posX] = Carre(grille.tailleCellule, "eau")
+                self.parcours.append(Position(posX, posY))
+
+                # On étend la largeur du fleuve
+                for i in range (1,int(self.largeur/2)+1):
+                    if (posY-i >= 0):
+                        grille.matCarre[posY-i][posX] = Carre(grille.tailleCellule, "eau")
+                    if (posY+i < grille.nbCelluleHauteur):
+                        grille.matCarre[posY+i][posX] = Carre(grille.tailleCellule, "eau")
+
+                # Position de la prochaine cellule du fleuve
+                posX = posX+1
+                posY = randint(posY-1, posY+1)
+        else:
+            self.departAGauche = False
+            posY = 0 # Départ en haut
+            posX = randint(5, grille.nbCelluleLargeur-5) # Le fleuve ne peut pas partir des autres bords
+            # Tant que le fleuve n'atteind pas un bord
+            while (posY < grille.nbCelluleHauteur and posX > 0 and posX < grille.nbCelluleLargeur):
+                # On créer une nouvelle cellule du fleuve
+                grille.matCarre[posY][posX] = Carre(grille.tailleCellule, "eau")
+                self.parcours.append(Position(posX, posY))
+
+                # On étend la largeur du fleuve
+                for i in range (1,int(self.largeur/2)+1):
+                    if (posX-i >= 0):
+                        grille.matCarre[posY][posX-i] = Carre(grille.tailleCellule, "eau")
+                    if (posX+i < grille.nbCelluleLargeur):
+                        grille.matCarre[posY][posX+i] = Carre(grille.tailleCellule, "eau")
+
+                # Position de la prochaine cellule du fleuve
+                posX = randint(posX-1, posX+1)
+                posY = posY+1
+        print("Fleuve de largeur " + repr(self.largeur) + " généré.")
+
+# END Fleuve
+
+
 # La classe Grille représente la carte
 class Grille:
     def __init__(self, fenetre, nbCelluleHauteur, nbCelluleLargeur, virus, nbPers):
@@ -295,8 +381,9 @@ class Grille:
                         ligne.append(Carre(self.tailleCellule, "vide"))
 
             self.matCarre.append(ligne)
-        if(randint(0,2)): # 2 chance sur 3 d'avoir un fleuve
-            self.genererFleuve()
+        # Taille minimal pour générer un fleuve
+        if(self.nbCelluleLargeur >= 30 and self.nbCelluleHauteur >= 30):
+            self.fleuve = Fleuve(self)
 
         self.genererDeplacements()
 
@@ -347,68 +434,32 @@ class Grille:
 
         return zonesUrbaines
 
-    # genererFleuve génère un fleuve aléatoire dans la grille
-    def genererFleuve(self):
-        print("Création d'un fleuve...")
-        # Taille minimal pour générer un fleuve
-        if(self.nbCelluleLargeur < 30 or self.nbCelluleHauteur < 30):
-            return
-        # Largueur du fleuve maximum 1/15 de la taille max de la grille
-        # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
-        if (self.nbCelluleHauteur < self.nbCelluleLargeur):
-            largeur = randint(3,int(self.nbCelluleHauteur/10))
-        else:
-            largeur = randint(3,int(self.nbCelluleLargeur/10))
-
-        # 1 chance sur 2 pour que le fleuve parte du haut ou de la gauche de la grille
-        if(randint(0,1)):
-            posX = 0 # Départ à gauche
-            posY = randint(5, self.nbCelluleHauteur-5) # Le fleuve ne peut pas partir des autres bords
-            # Tant que le fleuve n'atteind pas un bord
-            while (posX < self.nbCelluleLargeur and posY > 0 and posY < self.nbCelluleHauteur):
-                # On créer une nouvelle cellule du fleuve
-                self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
-
-                # Création des ponts
-                if(not(randint(0,10)) and posY+int(largeur/2)+1 < self.nbCelluleHauteur and posY-int(largeur/2)-1 > 0):
-                    self.deplacements.append(Deplacement("pont", posX, posY+int(largeur/2)+1, posX, posY-int(largeur/2)-1, self.tailleCellule))
-
-                # On étend la largeur du fleuve
-                for i in range (1,int(largeur/2)+1):
-                    if (posY-i >= 0):
-                        self.matCarre[posY-i][posX] = Carre(self.tailleCellule, "eau")
-                    if (posY+i < self.nbCelluleHauteur):
-                        self.matCarre[posY+i][posX] = Carre(self.tailleCellule, "eau")
-
-                # Position de la prochaine cellule du fleuve
-                posX = posX+1
-                posY = randint(posY-1, posY+1)
-        else:
-            posY = 0 # Départ à droite
-            posX = randint(5, self.nbCelluleLargeur-5) # Le fleuve ne peut pas partir des autres bords
-            # Tant que le fleuve n'atteind pas un bord
-            while (posY < self.nbCelluleHauteur and posX > 0 and posX < self.nbCelluleLargeur):
-                # On créer une nouvelle cellule du fleuve
-                self.matCarre[posY][posX] = Carre(self.tailleCellule, "eau")
-
-                # Création des ponts
-                if(not(randint(0,10)) and posX+int(largeur/2)+1 < self.nbCelluleLargeur and posX-int(largeur/2)-1 > 0):
-                    self.deplacements.append(Deplacement("pont", posX+int(largeur/2)+1, posY, posX-int(largeur/2)-1, posY, self.tailleCellule))
-
-                # On étend la largeur du fleuve
-                for i in range (1,int(largeur/2)+1):
-                    if (posX-i >= 0):
-                        self.matCarre[posY][posX-i] = Carre(self.tailleCellule, "eau")
-                    if (posX+i < self.nbCelluleLargeur):
-                        self.matCarre[posY][posX+i] = Carre(self.tailleCellule, "eau")
-
-                # Position de la prochaine cellule du fleuve
-                posX = randint(posX-1, posX+1)
-                posY = posY+1
-        print("Fleuve de largeur " + repr(largeur) + " généré.")
-
     # Génère tous les déplacements de la grille
     def genererDeplacements(self):
+        # Taille minimal pour générer un fleuve
+        if(self.nbCelluleLargeur >= 30 and self.nbCelluleHauteur >= 30):
+            # Création des ponts
+            if (self.fleuve.departAGauche):
+                i = 0
+                while (i < len(self.fleuve.parcours)):
+                    posX = self.fleuve.parcours[i].posX
+                    posY = self.fleuve.parcours[i].posY
+                    if(not(randint(0,10)) and posY+int(self.fleuve.largeur/2)+1 < self.nbCelluleHauteur and posY-int(self.fleuve.largeur/2)-1 > 0):
+                        self.deplacements.append(Deplacement("pont", posX, posY+int(self.fleuve.largeur/2)+1, posX, posY-int(self.fleuve.largeur/2)-1, self.tailleCellule))
+                        i += 5 # Ponts espacés de 4 cellules minimum
+                    else:
+                        i += 1
+            else:
+                i = 0
+                while (i < len(self.fleuve.parcours)):
+                    posX = self.fleuve.parcours[i].posX
+                    posY = self.fleuve.parcours[i].posY
+                    if(not(randint(0,10)) and posX+int(self.fleuve.largeur/2)+1 < self.nbCelluleLargeur and posX-int(self.fleuve.largeur/2)-1 > 0):
+                        self.deplacements.append(Deplacement("pont", posX+int(self.fleuve.largeur/2)+1, posY, posX-int(self.fleuve.largeur/2)-1, posY, self.tailleCellule))
+                        i += 5 # Ponts espacés de 4 cellules minimum
+                    else:
+                        i += 1
+
         for i in range (0, len(self.zonesUrbaines)-1):
             centerX = self.zonesUrbaines[i].posX
             centerY = self.zonesUrbaines[i].posY
@@ -417,8 +468,6 @@ class Grille:
             # Voies ferrées
             if ((self.zonesUrbaines[i].genre == "Ville" or self.zonesUrbaines[i].genre == "Metropole") and (self.zonesUrbaines[i+1].genre == "Ville" or self.zonesUrbaines[i+1].genre == "Metropole")):
                 self.deplacements.append(Deplacement("voieFerree", centerX, centerY, centerX1, centerY1, self.tailleCellule))
-
-            # Ponts
 
 
 
@@ -617,7 +666,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 80, 80, Virus("Peste noire"), 5)
+grille = Grille(root, 30, 30, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
