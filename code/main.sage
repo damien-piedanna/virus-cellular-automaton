@@ -199,16 +199,16 @@ class Deplacement:
             self.couleur = 'yellow'
 
     def afficher (self, canvas):
-        x0 = self.posX1*self.tailleCellule + 2
-        y0 = self.posY1*self.tailleCellule + 2
-        x1 = (self.posX1*self.tailleCellule)+self.tailleCellule - 2
-        y1 = (self.posY1*self.tailleCellule)+self.tailleCellule - 2
+        x0 = self.posX1*self.tailleCellule + int(10/100 * self.tailleCellule)
+        y0 = self.posY1*self.tailleCellule + int(10/100 * self.tailleCellule)
+        x1 = (self.posX1*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
+        y1 = (self.posY1*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
         canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
 
-        x0 = self.posX2*self.tailleCellule + 2
-        y0 = self.posY2*self.tailleCellule + 2
-        x1 = (self.posX2*self.tailleCellule)+self.tailleCellule - 2
-        y1 = (self.posY2*self.tailleCellule)+self.tailleCellule - 2
+        x0 = self.posX2*self.tailleCellule + int(10/100 * self.tailleCellule)
+        y0 = self.posY2*self.tailleCellule + int(10/100 * self.tailleCellule)
+        x1 = (self.posX2*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
+        y1 = (self.posY2*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
         canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
         
         x0 = self.posX1*self.tailleCellule + int(self.tailleCellule/2)
@@ -216,9 +216,9 @@ class Deplacement:
         x1 = self.posX2*self.tailleCellule + int(self.tailleCellule/2)
         y1 = self.posY2*self.tailleCellule + int(self.tailleCellule/2)
         
-        epaisseur = 3
+        epaisseur = int(20/100 * self.tailleCellule)
         if (self.etat == "pont"):
-            epaisseur = self.tailleCellule
+            epaisseur = self.tailleCellule - int(20/100 * self.tailleCellule)
 
         canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
 
@@ -617,7 +617,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 30, 30, Virus("Peste noire"), 5)
+grille = Grille(root, 80, 80, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
