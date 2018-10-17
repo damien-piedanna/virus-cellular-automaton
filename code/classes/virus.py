@@ -4,10 +4,7 @@
 class Virus:
     def __init__(self, label):
         self.label = label
-        if (self.label == "Bougnoulie"):
-            self.tauxReproduction = 666
-
-        elif (self.label == "Peste noire"):
+        if (self.label == "Peste noire"):
             self.tauxReproduction = 15
 
         elif (self.label == "Rougeole"):
