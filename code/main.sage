@@ -136,7 +136,7 @@ class Virus:
             self.tauxReproduction = 8
             self.tauxAge15 = 0.7
             self.tauxAge50 = 0.5
-            self.tauxAge70 = 0.6
+            self.tauxAge70 = 0.6
             self.tauxAge90 = 0.7
 
         elif (self.label == "Variole"):
@@ -166,7 +166,9 @@ class Virus:
             self.tauxAge50 = 0.5
             self.tauxAge70 = 0.5
             self.tauxAge90 = 0.5
+
 #END Virus
+
 
 
 # Une position dans la grille
@@ -450,7 +452,7 @@ class Grille:
             self.fleuve = Fleuve(self)
 
         self.genererDeplacements()
-        #self.algoPrim()
+        #self.algoKruskal()
 
         print("Grille générée !")
 
@@ -498,7 +500,7 @@ class Grille:
 
         return zonesUrbaines
 
-    def algoPrim(self):
+    def algoKruskal(self):
         zones = self.zonesUrbaines
         sommets = []
         i = 0
@@ -507,24 +509,32 @@ class Grille:
             sommets.append(zones[i].pos)
             i += 1
         
-        Sdeb = sommets[0] # Sommet départ
         P = [] # Sommets visités
-        P.append(Sdeb)
 
         # Tant que tous les sommets ne sont pas dans P
         while (len(P) < len(zones)):
-            distanceMin = self.nbCelluleLargeur*self.nbCelluleHauteur + 10
-            for i in range (1, len(sommets)):
-                for j in range (len(P)):
-                    if(P[j].distance(sommets[i]) < distanceMin):
-                        distanceMin = P[j].distance(sommets[i])
-                        sommet1 = P[j]
-                        sommet2 = sommets[i]
-            sommet1.printPos()
-            sommet2.printPos()
-            print("-----------")
-            P.append(sommet2)
-            self.deplacements.append(Deplacement("route", copy.deepcopy(sommet1), copy.deepcopy(sommet2), self.tailleCellule))
+            distancePrev = 0
+            sommetVisit1 = Position(0,0)
+            sommetVisit2 = Position(0,0)
+            for i in range (len(sommets)):
+                for j in range (len(sommets)):
+                    testerArete = True
+                    for k in range(len(P)-1):
+                        # Si l'arette a déjà été testée on ne la teste pas
+                        if (i == j or (sommets[i] == P[k] and sommets[j] == P[k+1])):
+                            print("Salut")
+                            testerArete = False
+                    if (testerArete and sommets[i].distance(sommets[j]) < distancePrev):
+                        sommets[i].printPos()
+                        sommets[j].printPos()
+                        distancePrev = sommets[i].distance(sommets[j])
+                        sommetVisit1 = sommets[i]
+                        sommetVisit2 = sommets[j]
+            P.append(sommetVisit1)
+            P.append(sommetVisit2)
+            sommetVisit1.printPos()
+            sommetVisit2.printPos()
+            self.deplacements.append(Deplacement("route", sommetVisit1, sommetVisit2, self.tailleCellule))
 
     # Génère tous les déplacements de la grille
     def genererDeplacements(self):
@@ -607,7 +617,6 @@ class Grille:
                 else: # Le déplacement est un pont
                     if (self.matCell[depart.Y][depart.X].etat == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
-                            self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
                             self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
                             self.nbInfecte += 1
                             self.nbSain -= 1
@@ -667,7 +676,6 @@ class Grille:
                 if (zone.contient(Position(i,j))):
                     zone.nbSain += 1
                     zone.nbInfecte -= 1
-
     # Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest
     def soumettreAuVirus (self, matDeTest,posX, posY):
         tauxInfection = 0.0
@@ -916,8 +924,6 @@ class ThreadCommands(threading.Thread):
         self._actif = True
         cpt = 0
         while self._actif:
-            print("Nb infecte : " + repr(grille.nbInfecte))
-            print("Nb sain : " + repr(grille.nbSain))
             if self._pause:
                 time.sleep(0.1)
                 continue
@@ -960,7 +966,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 100, 100, Virus("Peste noire"), 5)
+grille = Grille(root, 40, 40, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
