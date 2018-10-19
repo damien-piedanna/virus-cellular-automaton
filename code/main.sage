@@ -150,7 +150,7 @@ class Position:
         distance = int(abs(sqrt((pos.X-self.X)*(pos.X-self.X) + (pos.Y-self.Y)*(pos.Y-self.Y))))
         return distance
 
-    def print(self):
+    def printPos(self):
         print("Position (" + repr(self.X) + ", " + repr(self.Y) + ")")
 
 # END Position
@@ -489,8 +489,8 @@ class Grille:
                         distanceMin = P[j].distance(sommets[i])
                         sommet1 = P[j]
                         sommet2 = sommets[i]
-            sommet1.print()
-            sommet2.print()
+            sommet1.printPos()
+            sommet2.printPos()
             print("-----------")
             P.append(sommet2)
             self.deplacements.append(Deplacement("route", copy.deepcopy(sommet1), copy.deepcopy(sommet2), self.tailleCellule))
@@ -569,18 +569,18 @@ class Grille:
                     if (voyageur == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
                             self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
-                        self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
-                        self.nbInfecte += 1
-                        self.nbSain -= 1
-                        self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
+                            self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
+                            self.nbInfecte += 1
+                            self.nbSain -= 1
+                            self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
                 else: # Le déplacement est un pont
                     if (self.matCell[depart.Y][depart.X].etat == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
                             self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
-                        self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
-                        self.nbInfecte += 1
-                        self.nbSain -= 1
-                        self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
+                            self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
+                            self.nbInfecte += 1
+                            self.nbSain -= 1
+                            self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
@@ -756,7 +756,8 @@ class ThreadCommands(threading.Thread):
         self._actif = True
         cpt = 0
         while self._actif:
-            print(grille.nbInfecte)
+            print("Nb infecte : " + repr(grille.nbInfecte))
+            print("Nb sain : " + repr(grille.nbSain))
             if self._pause:
                 time.sleep(0.1)
                 continue
@@ -799,7 +800,7 @@ pctInfecte.pack()
 
 # Création de la grille représentative de la population
 # Paramètres = fenetre, hauteur, largeur, virus, nb de personne dans un carré
-grille = Grille(root, 30, 30, Virus("Peste noire"), 5)
+grille = Grille(root, 100, 100, Virus("Peste noire"), 5)
 grille.afficher()
 
 # Création d'un thread pour la propagation
