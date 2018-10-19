@@ -113,28 +113,59 @@ class Virus:
         self.label = label
         if (self.label == "Peste noire"):
             self.tauxReproduction = 15
+            self.tauxAge15 = 0.8
+            self.tauxAge50 = 0.7
+            self.tauxAge70 = 0.8
+            self.tauxAge90 = 0.9
 
         elif (self.label == "Rougeole"):
             self.tauxReproduction = 12
+            self.tauxAge15 = 0.7
+            self.tauxAge50 = 0.6
+            self.tauxAge70 = 0.7
+            self.tauxAge90 = 0.8
 
         elif (self.label == "Coqueluche"):
             self.tauxReproduction = 10
+            self.tauxAge15 = 0.7
+            self.tauxAge50 = 0.6
+            self.tauxAge70 = 0.6
+            self.tauxAge90 = 0.7
 
-        elif (self.label == "Rougeole"):
+        elif (self.label == "Diphtérie"):
             self.tauxReproduction = 8
+            self.tauxAge15 = 0.7
+            self.tauxAge50 = 0.5
+            self.tauxAge70 = 0.6
+            self.tauxAge90 = 0.7
 
         elif (self.label == "Variole"):
             self.tauxReproduction = 6
+            self.tauxAge15 = 0.7
+            self.tauxAge50 = 0.5
+            self.tauxAge70 = 0.5
+            self.tauxAge90 = 0.6
 
-        elif (self.label == "VIH"):
+        elif (self.label == "Poliomyélite"):
             self.tauxReproduction = 4
+            self.tauxAge15 = 0.7
+            self.tauxAge50 = 0.4
+            self.tauxAge70 = 0.3
+            self.tauxAge90 = 0.2
 
         elif (self.label == "Grippe"):
-            self.tauxReproduction = 2  
+            self.tauxReproduction = 2
+            self.tauxAge15 = 0.6
+            self.tauxAge50 = 0.4 
+            self.tauxAge70 = 0.5
+            self.tauxAge90 = 0.6
 
         else: # Virus inconnu
             self.tauxReproduction = 5
-
+            self.tauxAge15 = 0.5
+            self.tauxAge50 = 0.5
+            self.tauxAge70 = 0.5
+            self.tauxAge90 = 0.5
 #END Virus
 
 
@@ -640,6 +671,8 @@ class Grille:
     # Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest
     def soumettreAuVirus (self, matDeTest,posX, posY):
         tauxInfection = 0.0
+        cptSain = 0
+        cptInfecte = 0 
         # 01 02 03 04 05 #
         # 06 07 08 09 10 #
         # 11 12 XX 13 14 #
@@ -648,63 +681,190 @@ class Grille:
 
         #Récupère le nombre de cellule inféctées pour chaque cellule et ajoute si c'est le cas un taux.
         if(posY >= 2):
-            if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
-                tauxInfection = tauxInfection + 0.25
-            if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
-                tauxInfection = tauxInfection + 0.25
+            if (posX >= 2):
+                if(matDeTest[posY-2][posX-2].etat == "infecte"): #1
+                    tauxInfection = tauxInfection + 0.25
+                    cptInfecte += 1
+                elif(matDeTest[posY-2][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY-2][posX-1].etat == "infecte"): #2
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY-2][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY-2][posX].etat == "infecte"): #3
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte +=1
+                elif(matDeTest[posY-2][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY-2][posX+1].etat == "infecte"): #4
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY-2][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY-2][posX+2].etat == "infecte"): #5
+                    tauxInfection = tauxInfection + 0.25
+                    cptInfecte += 1
+                elif(matDeTest[posY-2][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY >= 1 ):
-            if (posX >= 2 and matDeTest[posY-1][posX-2].etat == "infecte"): #6
-                tauxInfection = tauxInfection + 0.5
-            if (posX >= 1 and matDeTest[posY-1][posX-1].etat == "infecte"): #7
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur and matDeTest[posY-1][posX].etat == "infecte"): #8
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-1][posX+1].etat == "infecte"): #9
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-1][posX+2].etat == "infecte"): #10
-                tauxInfection = tauxInfection + 0.5
+            if (posX >= 2):
+                if(matDeTest[posY-1][posX-2].etat == "infecte"): #6
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte +=1
+                elif(matDeTest[posY-1][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY-1][posX-1].etat == "infecte"): #7
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY-1][posX-1].etat == "sain"):
+                    cptSain =+ 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY-1][posX].etat == "infecte"): #8
+                    tauxInfection = tauxInfection + 1
+                    cptInfecte += 1
+                elif(matDeTest[posY-1][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY-1][posX+1].etat == "infecte"): #9
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY-1][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY-1][posX+2].etat == "infecte"): #10
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY-1][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur):
-            if (posX >= 2 and matDeTest[posY][posX-2].etat == "infecte"): #11
-                tauxInfection = tauxInfection + 0.75
-            if (posX >= 1 and matDeTest[posY][posX-1].etat == "infecte"): #12
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY][posX+1].etat == "infecte"): #13
-                tauxInfection = tauxInfection + 1        
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY][posX+2].etat == "infecte"): #14
-                tauxInfection = tauxInfection + 0.75
+            if (posX >= 2):
+                if(matDeTest[posY][posX-2].etat == "infecte"): #11
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY][posX-1].etat == "infecte"): #12
+                    tauxInfection = tauxInfection + 1
+                    cptInfecte += 1
+                elif(matDeTest[posY][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY][posX+1].etat == "infecte"): #13
+                    tauxInfection = tauxInfection + 1
+                    cptInfecte += 1
+                elif(matDeTest[posY][posX+1].etat == "sain"):
+                    cptSain += 1  
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY][posX+2].etat == "infecte"): #14
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur-1):
-            if (posX >= 2 and matDeTest[posY+1][posX-2].etat == "infecte"): #15
-                tauxInfection = tauxInfection + 0.5
-            if (posX >= 1 and matDeTest[posY+1][posX-1].etat == "infecte"): #16
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur and matDeTest[posY+1][posX].etat == "infecte"): #17
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+1][posX+1].etat == "infecte"): #18
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+1][posX+2].etat == "infecte"): #19
-                tauxInfection = tauxInfection + 0.5
+            if (posX >= 2):
+                if(matDeTest[posY+1][posX-2].etat == "infecte"): #15
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY+1][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY+1][posX-1].etat == "infecte"): #16
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY+1][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY+1][posX].etat == "infecte"): #17
+                    tauxInfection = tauxInfection + 1
+                    cptInfecte += 1
+                elif(matDeTest[posY+1][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY+1][posX+1].etat == "infecte"): #18
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY+1][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY+1][posX+2].etat == "infecte"): #19
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY+1][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur-2):
-            if (posX >= 2 and matDeTest[posY+2][posX-2].etat == "infecte"): #20
-                tauxInfection = tauxInfection + 0.25
-            if (posX >= 1 and matDeTest[posY+2][posX-1].etat == "infecte"): #21
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur and matDeTest[posY+2][posX].etat == "infecte"): #22
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+2][posX+1].etat == "infecte"): #23
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+2][posX+2].etat == "infecte"): #24
-                tauxInfection = tauxInfection + 0.25
+            if (posX >= 2):
+                if(matDeTest[posY+2][posX-2].etat == "infecte"): #20
+                    tauxInfection = tauxInfection + 0.25
+                    cptInfecte += 1
+                elif(matDeTest[posY+2][posX-2].etat == "sain"):
+                    cptSain += 1
 
+            if (posX >= 1):
+                if(matDeTest[posY+2][posX-1].etat == "infecte"): #21
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY+2][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY+2][posX].etat == "infecte"): #22
+                    tauxInfection = tauxInfection + 0.75
+                    cptInfecte += 1
+                elif(matDeTest[posY+2][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY+2][posX+1].etat == "infecte"): #23
+                    tauxInfection = tauxInfection + 0.5
+                    cptInfecte += 1
+                elif(matDeTest[posY+2][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY+2][posX+2].etat == "infecte"): #24
+                    tauxInfection = tauxInfection + 0.25
+                    cptInfecte += 1
+                elif(matDeTest[posY+2][posX+2].etat == "sain"):
+                    cptSain += 1
+
+        if (self.moyenneAge <=15 ):        
+            tauxAge = self.virus.tauxAge15
+            self.tauxInfection = self.virus.tauxReproduction*(cptSain*cptInfecte/cptSain+cptInfecte)*tauxAge
+        elif (self.moyenneAge <=50 ):        
+            tauxAge = self.virus.tauxAge50
+            self.tauxInfection = self.virus.tauxReproduction*(cptSain*cptInfecte/cptSain+cptInfecte)*tauxAge
+        elif (self.moyenneAge <=70 ):        
+            tauxAge = self.virus.tauxAge70
+            self.tauxInfection = self.virus.tauxReproduction*(cptSain*cptInfecte/cptSain+cptInfecte)*tauxAge
+        elif (self.moyenneAge <=90 ):        
+            tauxAge = self.virus.tauxAge90
+            self.tauxInfection = self.virus.tauxReproduction*(cptSain*cptInfecte/cptSain+cptInfecte)*tauxAge
 
         if (tauxInfection > 0):
             #Defini si la cellule devient infectée
