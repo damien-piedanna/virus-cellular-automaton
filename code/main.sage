@@ -25,7 +25,7 @@ def lancerSimulation():
 
 	# Création de la fenêtre
 	simulation = Tk()
-	simulation.title('Propagation nomVirus')
+	simulation.title('Propagation ' + nomVirus)
 
 	# Création compteur de jour
 	compteur = Label(simulation, text="Jour 0")
