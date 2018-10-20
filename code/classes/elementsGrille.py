@@ -150,20 +150,20 @@ class Deplacement:
         self.etat = etat
         if (self.etat == "pont"):
             self.couleur = 'lime'
-            self.probaVoyage = 70
+            self.probaVoyage = 100
             self.vitesse = 1 # en nombre de pixels par dixième de seconde
         elif (self.etat == "route"):
             self.couleur = 'brown'
-            self.probaVoyage = 50
-            self.vitesse = 10 # en nombre de pixels par dixième de seconde
+            self.probaVoyage = 5
+            self.vitesse = 2 # en nombre de pixels par dixième de seconde
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
-            self.probaVoyage = 30
-            self.vitesse = 30 # en nombre de pixels par dixième de seconde
+            self.probaVoyage = 3
+            self.vitesse = 3 # en nombre de pixels par dixième de seconde
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
-            self.probaVoyage = 10
-            self.vitesse = 70 # en nombre de pixels par dixième de seconde
+            self.probaVoyage = 1
+            self.vitesse = 5 # en nombre de pixels par dixième de seconde
         else: # donc cellule inconnue
             self.couleur = 'yellow'
             self.probaVoyage = 0
