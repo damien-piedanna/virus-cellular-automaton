@@ -202,7 +202,7 @@ class Grille:
         for i in range (len(self.deplacements)):
             deplacement = self.deplacements[i]
             # Probabilité qu'un voyage soit réalisé
-            if (randint(0, 100) <= deplacement.probaVoyage):
+            if (randint(0, 100) < deplacement.probaVoyage):
                 # Une chance sur deux que le voyage soit dans un sens ou dans l'autre
                 if (randint(0,1)):
                     depart = deplacement.pos1
@@ -210,7 +210,7 @@ class Grille:
                 else:
                     depart = deplacement.pos2
                     arrivee = deplacement.pos1
-                # Les ponts sont différents car ne partent pas d'une zone urbaine
+                # Les ponts gérés différement
                 if (deplacement.etat != "pont"):
                     # Récupération de la zone urbaine de départ
                     zone = 0
@@ -225,13 +225,12 @@ class Grille:
                     else:
                         tauxInfecte = zone.nbInfecte/(zone.nbSain+zone.nbInfecte)*100
 
-                    if (randint(0, 100) <= tauxInfecte):
+                    if (randint(0, 100) < tauxInfecte):
                         voyageur = "infecte"
                     else:
                         voyageur = "sain"
 
-                    #print("In main : " + repr(voyageur))
-                    #self.animationDeplacement(depart, arrivee, voyageur)
+                    self.animationDeplacement(deplacement, depart, arrivee, voyageur)
                     if (voyageur == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
                             self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
@@ -248,21 +247,24 @@ class Grille:
                             self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
 
     # Affiche l'animation d'un voyage sur le deplacement allant de depart à arrivee
-    def animationDeplacement(self, depart, arrivee, voyageur):
-        print("In animation : " + repr(voyageur))
+    def animationDeplacement(self, deplacement, depart, arrivee, voyageur):
+        print("animation " + repr(voyageur))
         if(voyageur == "sain"):
             couleur = 'green'
         else:
             couleur = 'red'
-        #train = self.grille.create_oval(depart.X*self.tailleCellule, depart.Y*self.tailleCellule, depart.X*self.tailleCellule+self.tailleCellule, depart.Y*self.tailleCellule+self.tailleCellule, fill=couleur, width=0)
-        deltax = (arrivee.X - depart.X)*self.tailleCellule
-        deltay = (arrivee.Y - depart.Y)*self.tailleCellule
-        self.grille.create_rectangle(0,0,20,20, fill='black')
-        #while(self.grille.coords(train)[0] < arrivee.X*self.tailleCellule and self.grille.coords(train)[1] < arrivee.Y*self.tailleCellule):
-        #    self.grille.move(train, 0.2*deltax, 0.2*deltay)
-        #    time.sleep(0.2)
+    
+        train = self.grille.create_oval(depart.X*self.tailleCellule, depart.Y*self.tailleCellule, depart.X*self.tailleCellule+self.tailleCellule, depart.Y*self.tailleCellule+self.tailleCellule, fill=couleur, width=1)
+        deltaX = (arrivee.X - depart.X)*self.tailleCellule
+        deltaY = (arrivee.Y - depart.Y)*self.tailleCellule
 
-        #self.grille.delete(train)
+        # Tant que le rond n'est pas à l'arrivée
+        while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule)) > 10):
+            self.grille.move(train, deltaX*(deplacement.vitesse/100), deltaY*(deplacement.vitesse/100))
+            self.grille.update()
+            time.sleep(0.015)
+
+        self.grille.delete(train)
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
