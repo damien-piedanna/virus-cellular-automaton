@@ -19,7 +19,6 @@ from classes.cellule import *
 # Classe Fleuve représente un fleuve
 class Fleuve:
     def __init__(self, grille):
-        print("Création d'un fleuve...")
         self.parcours = []
         # Largueur du fleuve maximum 1/10 de la taille max de la grille
         # Si largeur est paire, le fleuve est représenté avec une largeur de largeur+1
@@ -83,7 +82,6 @@ class Fleuve:
                 pos.X = randint(pos.X-1, pos.X+1)
                 pos.Y += 1
                 pos = copy.deepcopy(pos) # Pos pointe sur une nouvele case mémoire
-        print("Fleuve de largeur " + repr(self.largeur) + " généré.")
 
 
 # La classe zone urbaine représente des regroupements de population sur la grille
@@ -151,23 +149,23 @@ class Deplacement:
         if (self.etat == "pont"):
             self.couleur = 'lime'
             self.probaVoyage = 100
-            self.vitesse = 1 # en nombre de pixels par dixième de seconde
+            self.vitesse = 1 # en nombre de pixels par centième de seconde
         elif (self.etat == "route"):
             self.couleur = 'brown'
             self.probaVoyage = 5
-            self.vitesse = 2 # en nombre de pixels par dixième de seconde
+            self.vitesse = 2 # en nombre de pixels par centième de seconde
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
             self.probaVoyage = 3
-            self.vitesse = 3 # en nombre de pixels par dixième de seconde
+            self.vitesse = 3 # en nombre de pixels par centième de seconde
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
             self.probaVoyage = 1
-            self.vitesse = 5 # en nombre de pixels par dixième de seconde
+            self.vitesse = 5 # en nombre de pixels par centième de seconde
         else: # donc cellule inconnue
             self.couleur = 'yellow'
             self.probaVoyage = 0
-            self.vitesse = 0 # en nombre de pixels par dixième de seconde
+            self.vitesse = 0 # en nombre de pixels par centième de seconde
 
     def afficher (self, canvas):
         x0 = self.pos1.X*self.tailleCellule + int(10/100 * self.tailleCellule)

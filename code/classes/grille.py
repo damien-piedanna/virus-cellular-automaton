@@ -34,7 +34,7 @@ class Grille:
         self.tailleCellule = int((hauteurEcranPx-200)/nbCelluleHauteur)
         if (nbCelluleLargeur*self.tailleCellule > largeurEcranPx):
             self.tailleCellule = int(largeurEcranPx/nbCelluleLargeur)
-        print(self.tailleCellule)
+
         self.grille = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
         self.matCell = []
@@ -150,10 +150,6 @@ class Grille:
                 if (nbZonesChevauchees == 0):
                     zonesUrbaines.append(zone)
                     break
-
-        print(repr(len(zonesUrbaines)) + " zones urbaines :")
-        for i in range (len(zonesUrbaines)):
-            print("La zone " + repr(i) + " est un(e) " + zonesUrbaines[i].genre + " de centre (" + repr(zonesUrbaines[i].pos.X) + "," + repr(zonesUrbaines[i].pos.Y) + ") et de rayon " + repr(zonesUrbaines[i].rayon))
 
         return zonesUrbaines
 
@@ -303,7 +299,7 @@ class Grille:
             self.matCell[j][i].setEtat("infecte")
             self.matCell[j][i].afficher(self.grille, i, j)
             self.afficherDeplacements()
-            print("la cellule " + repr(i) + " ; " + repr(j) + " a été infectée.")
+            print("Cellule (" + repr(i) + " ; " + repr(j) + ") infectée manuellement.")
             self.nbSain -= 1
             self.nbInfecte += 1
             for numZone in range (len(self.zonesUrbaines)):
@@ -324,7 +320,7 @@ class Grille:
             self.matCell[j][i].setEtat("sain")
             self.matCell[j][i].afficher(self.grille, i, j)
             self.afficherDeplacements()
-            print("la cellule " + repr(i) + " ; " + repr(j) + " a été guérie.")
+            print("Cellule (" + repr(i) + " ; " + repr(j) + ") guérie manuellement.")
             self.nbSain += 1
             self.nbInfecte -= 1
             for numZone in range (len(self.zonesUrbaines)):
