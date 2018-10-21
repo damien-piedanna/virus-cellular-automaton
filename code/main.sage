@@ -12,16 +12,18 @@ from classes.threads import *
 
 # Lance la simulation
 def lancerSimulation():
-	nbCellulesHauteur = int(hauteurEntry.get())
-	nbCellulesLargeur = int(largeurEntry.get())
-	if (nbCellulesHauteur < 1):
-		nbCellulesHauteur = 60
-	if (nbCellulesLargeur < 1):
-		nbCellulesLargeur = 90
+	# Test si les entrées sont bien des entiers
+	try:	
+		nbCellulesHauteur = int(hauteurEntry.get())
+		nbCellulesLargeur = int(largeurEntry.get())
+	except ValueError:
+		return
 
-	nomVirus = virus.get()
-	if (nomVirus != "Peste noire" and nomVirus != "Rougeole" and nomVirus != "Coqueluche" and nomVirus != "Diphtérie" and nomVirus != "Variole" and nomVirus != "Poliomyélite" and nomVirus != "Grippe"):
-		nomVirus = "Inconnu"
+	# La grille ne peut pas faire moins de 1px de largeur ou de hauteur
+	if (nbCellulesHauteur < 1 or nbCellulesLargeur < 1):
+		return
+
+	nomVirus = var.get()
 
 	# Création de la fenêtre
 	simulation = Tk()
@@ -63,23 +65,38 @@ def lancerSimulation():
 
 
 # FONCTION MAIN #
+virus = ["Peste noire", "Rougeole", "Coqueluche", "Diphtérie", "Variole", "Poliomyélite", "Grippe"]
+radioVirus = []
+
 root = Tk()
-root.geometry("500x300")
+
 root.title('Menu')
 
+# Entrée nombre de cellules hauteur
 Label(root, text="Nombre de cellule en hauteur").pack()
-hauteurEntry = Entry(root)
+hauteurDefaut = StringVar(root, value='60')
+hauteurEntry = Entry(root, textvariable=hauteurDefaut)
 hauteurEntry.pack()
 
+# Entrée nombre de cellules largeur
 Label(root, text="Nombre de cellule en largeur").pack()
-largeurEntry = Entry(root)
+largeurDefaut = StringVar(root, value='90')
+largeurEntry = Entry(root, textvariable=largeurDefaut)
 largeurEntry.pack()
 
+# Proposition des virus
+var = StringVar()
 Label(root, text="Choisir le virus").pack()
-Label(root, text="(Peste noire, Rougeole, Coqueluche, Diphtérie, Variole, Poliomyélite, Grippe)").pack()
-virus = Entry(root)
-virus.pack()
+for i in range (len(virus)):
+	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i]))
+	radioVirus[i].pack()
 
+# On selectionne par defaut le premier virus
+for radio in radioVirus:
+	radio.deselect()
+radioVirus[0].select()
+
+# Bouton pour lancer la simulation
 boutonBegin = Button(root, text="Commencer", command=lancerSimulation)
 boutonBegin.pack()
 
