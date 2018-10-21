@@ -248,13 +248,25 @@ class Grille:
 
     # Affiche l'animation d'un voyage sur le deplacement allant de depart à arrivee
     def animationDeplacement(self, deplacement, depart, arrivee, voyageur):
-        print("animation " + repr(voyageur))
         if(voyageur == "sain"):
             couleur = 'green'
         else:
             couleur = 'red'
-    
-        train = self.grille.create_oval(depart.X*self.tailleCellule, depart.Y*self.tailleCellule, depart.X*self.tailleCellule+self.tailleCellule, depart.Y*self.tailleCellule+self.tailleCellule, fill=couleur, width=1)
+        
+        # Le cercle représentant le voyageur est de diamètre 80% de la taille d'une cellule, mais minimum 16 pixels
+        if (self.tailleCellule < 16):
+            rayon = 8
+        else:
+            rayon = int(40/100 * self.tailleCellule)
+
+        x0 = depart.X*self.tailleCellule + self.tailleCellule/2 - rayon
+        y0 = depart.Y*self.tailleCellule + self.tailleCellule/2 - rayon
+        x1 = depart.X*self.tailleCellule + self.tailleCellule/2 + rayon
+        y1 = depart.Y*self.tailleCellule + self.tailleCellule/2 + rayon
+
+        train = self.grille.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
+        self.grille.update()
+
         deltaX = (arrivee.X - depart.X)*self.tailleCellule
         deltaY = (arrivee.Y - depart.Y)*self.tailleCellule
 
@@ -262,7 +274,7 @@ class Grille:
         while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule)) > 10):
             self.grille.move(train, deltaX*(deplacement.vitesse/100), deltaY*(deplacement.vitesse/100))
             self.grille.update()
-            time.sleep(0.015)
+            time.sleep(0.025)
 
         self.grille.delete(train)
 
