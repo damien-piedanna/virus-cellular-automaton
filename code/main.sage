@@ -1,9 +1,9 @@
 # -*- cod# -*- coding: utf-8 -*-
-#####################################
+##############################
 #
-# Boucle principale de la simulation
+# Fichier de départ du projet
 #
-#####################################
+##############################
 
 from tkinter import *
 
