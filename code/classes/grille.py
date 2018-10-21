@@ -267,7 +267,7 @@ class Grille:
         deltaY = (arrivee.Y - depart.Y)*self.tailleCellule
 
         # Tant que le rond n'est pas à l'arrivée
-        while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule)) > 10):
+        while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule)) < Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule))):
             self.grille.move(train, deltaX*(deplacement.vitesse/100), deltaY*(deplacement.vitesse/100))
             self.grille.update()
             time.sleep(0.025)
