@@ -148,24 +148,24 @@ class Deplacement:
         self.etat = etat
         if (self.etat == "pont"):
             self.couleur = 'lime'
-            self.probaVoyage = 100
-            self.vitesse = 1 # en nombre de pixels par centième de seconde
+            self.probaVoyage = 0
+            self.vitesse = 1 # en nombre de fois la distance toutes les 0.025sec
         elif (self.etat == "route"):
             self.couleur = 'brown'
             self.probaVoyage = 5
-            self.vitesse = 2 # en nombre de pixels par centième de seconde
+            self.vitesse = 0.02 # en nombre de fois la distance toutes les 0.025sec
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
             self.probaVoyage = 3
-            self.vitesse = 3 # en nombre de pixels par centième de seconde
+            self.vitesse = 0.03 # en nombre de fois la distance toutes les 0.025sec
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
             self.probaVoyage = 1
-            self.vitesse = 5 # en nombre de pixels par centième de seconde
+            self.vitesse = 0.05 # en nombre de fois la distance toutes les 0.025sec
         else: # donc cellule inconnue
             self.couleur = 'yellow'
             self.probaVoyage = 0
-            self.vitesse = 0 # en nombre de pixels par centième de seconde
+            self.vitesse = 0 # en nombre de fois la distance toutes les 0.025sec
 
     def afficher (self, canvas):
         x0 = self.pos1.X*self.tailleCellule + int(10/100 * self.tailleCellule)

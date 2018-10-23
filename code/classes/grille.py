@@ -219,7 +219,7 @@ class Grille:
                     if (zone.nbSain+zone.nbInfecte == 0):
                         tauxInfecte = 0
                     else:
-                        tauxInfecte = zone.nbInfecte/(zone.nbSain+zone.nbInfecte)*100
+                        tauxInfecte = (zone.nbInfecte*100/(zone.nbSain+zone.nbInfecte))
 
                     if (randint(0, 100) < tauxInfecte):
                         voyageur = "infecte"
@@ -268,7 +268,7 @@ class Grille:
 
         # Tant que le rond n'est pas à l'arrivée
         while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule)) < Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule))):
-            self.grille.move(train, deltaX*(deplacement.vitesse/100), deltaY*(deplacement.vitesse/100))
+            self.grille.move(train, deltaX*deplacement.vitesse, deltaY*deplacement.vitesse)
             self.grille.update()
             time.sleep(0.025)
 
