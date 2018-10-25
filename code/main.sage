@@ -88,7 +88,7 @@ largeurEntry.pack()
 var = StringVar()
 Label(root, text="Choisir le virus").pack()
 for i in range (len(virus)):
-	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i]))
+	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i],borderwidth=5))
 	radioVirus[i].pack()
 
 # On selectionne par defaut le premier virus
@@ -97,7 +97,7 @@ for radio in radioVirus:
 radioVirus[0].select()
 
 # Bouton pour lancer la simulation
-boutonBegin = Button(root, text="Commencer", command=lancerSimulation)
+boutonBegin = Button(root, text="Commencer", command=lancerSimulation, activebackground="chartreuse", background="lime green", borderwidth=5)
 boutonBegin.pack()
 
 root.mainloop()
