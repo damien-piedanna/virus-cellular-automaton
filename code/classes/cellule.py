@@ -20,6 +20,7 @@ class Cellule:
         self.etat = etat
         self.tailleCellule = tailleCellule
         self.setEtat(etat)
+        self.carreGraphique = 0
 
     def setEtat (self, etat):
         self.etat = etat;
@@ -42,7 +43,7 @@ class Cellule:
         else:
             bordure = 0
 
-        canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
+        self.carreGraphique = canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
 
 
 # La classe CellulePopulation représente une cellule peuplée

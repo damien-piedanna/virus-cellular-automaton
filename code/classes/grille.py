@@ -233,14 +233,14 @@ class Grille:
                             self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
                             self.nbInfecte += 1
                             self.nbSain -= 1
-                            self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
+                            self.grille.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
                 else: # Le déplacement est un pont
                     if (self.matCell[depart.Y][depart.X].etat == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
                             self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
                             self.nbInfecte += 1
                             self.nbSain -= 1
-                            self.matCell[arrivee.Y][arrivee.X].afficher(self.grille, arrivee.X, arrivee.Y)
+                            self.grille.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
 
     # Affiche l'animation d'un voyage sur le deplacement allant de depart à arrivee
     def animationDeplacement(self, deplacement, depart, arrivee, voyageur):
@@ -285,6 +285,7 @@ class Grille:
             for x in range(len(self.matCell[0])):
                 self.matCell[y][x].afficher(self.grille, x, y)
         self.afficherDeplacements()
+        self.grille.update()
 
 
     # Infecte la cellule lorsqu'on clique gauche dessus
@@ -297,8 +298,7 @@ class Grille:
 
         if(self.matCell[j][i].etat == "sain"):
             self.matCell[j][i].setEtat("infecte")
-            self.matCell[j][i].afficher(self.grille, i, j)
-            self.afficherDeplacements()
+            self.grille.itemconfig(self.matCell[j][i].carreGraphique, fill='red')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") infectée manuellement.")
             self.nbSain -= 1
             self.nbInfecte += 1
@@ -318,8 +318,7 @@ class Grille:
 
         if(self.matCell[j][i].etat == "infecte"):
             self.matCell[j][i].setEtat("sain")
-            self.matCell[j][i].afficher(self.grille, i, j)
-            self.afficherDeplacements()
+            self.grille.itemconfig(self.matCell[j][i].carreGraphique, fill='green')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") guérie manuellement.")
             self.nbSain += 1
             self.nbInfecte -= 1
@@ -403,7 +402,7 @@ class Grille:
             nbAlea = randint(0,100)
             if (nbAlea < tauxInfection*self.virus.tauxReproduction):
                 self.matCell[posY][posX].setEtat("infecte")
-                self.matCell[posY][posX].afficher(self.grille, posX, posY)
+                self.grille.itemconfig(self.matCell[posY][posX].carreGraphique, fill='red')
                 self.nbSain = self.nbSain - 1
                 self.nbInfecte = self.nbInfecte + 1
                 for numZone in range (len(self.zonesUrbaines)):
@@ -424,8 +423,7 @@ class Grille:
                     self.matCell[y][x].setEtat("sain")
                     self.nbInfecte -= 1
                     self.nbSain += 1
-                    self.matCell[y][x].afficher(self.grille, x, y)
-        self.afficherDeplacements()
+                    self.grille.itemconfig(self.matCell[y][x].carreGraphique, fill='green')
         self.lancerVoyages()
 
     # Propage le virus d'un jour                
