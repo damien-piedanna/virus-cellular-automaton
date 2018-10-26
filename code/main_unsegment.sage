@@ -269,7 +269,7 @@ class Deplacement:
         self.etat = etat
         if (self.etat == "pont"):
             self.couleur = 'lime'
-            self.probaVoyage = 0
+            self.probaVoyage = 100
             self.vitesse = 1 # en nombre de fois la distance toutes les 0.025sec
         elif (self.etat == "route"):
             self.couleur = 'brown'
@@ -366,7 +366,7 @@ class Grille:
                     zoneUrbaine = self.zonesUrbaines[i]
                     if (zoneUrbaine.contient(Position(x,y))):
                         if (zoneUrbaine.genre == "ZonePeuplee"):
-                            if (randint(1,4) == 1): # 1 chance sur 4 qu'un carré soit peuplé dans une zone peuplée
+                            if (randint(1,3) == 1): # 1 chance sur 4 qu'un carré soit peuplé dans une zone peuplée
                                 ageMoy = CellulePopulation.genenerAgeMoyen(self.nbPers)
                                 ligne.append(CellulePopulation(self.tailleCellule, "sain", ageMoy))
                                 self.nbSain = self.nbSain + 1
@@ -394,7 +394,7 @@ class Grille:
                         break # Pas besoin de parcourir les autres zones car une cellule ne peut être que dans une seule zone
 
                 if(not(estDansUneZoneUrbaine)):
-                    if (randint(1,8) == 1): # 1 chance sur 8 qu'un carré soit peuplé si il est en dehors d'une zone urbaine
+                    if (randint(1,6) == 1): # 1 chance sur 8 qu'un carré soit peuplé si il est en dehors d'une zone urbaine
                         ageMoy = CellulePopulation.genenerAgeMoyen(self.nbPers)
                         ligne.append(CellulePopulation(self.tailleCellule, "sain", ageMoy))
                         self.nbSain = self.nbSain + 1
@@ -531,7 +531,9 @@ class Grille:
                     else:
                         voyageur = "sain"
 
-                    self.animationDeplacement(deplacement, depart, arrivee, voyageur)
+                    anim = ThreadAnimation(self, deplacement, depart, arrivee, voyageur)
+                    anim.start()
+                    #self.animationDeplacement(deplacement, depart, arrivee, voyageur)
                     if (voyageur == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
                             self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
@@ -780,6 +782,49 @@ class ThreadCommands(threading.Thread):
     def continu(self):
         self._pause = False
 
+# La classe ThreadCommands permet l'affichage des voyages
+class ThreadAnimation(threading.Thread):
+    def __init__(self, grille, deplacement, depart, arrivee, voyageur):
+        threading.Thread.__init__(self)
+        print("init anim")
+        self.grille = grille
+        self.deplacement = deplacement
+        self.depart = depart
+        self.arrivee = arrivee
+        self.voyageur = voyageur
+ 
+    def run(self):
+    	print("run trhad")
+        if(self.voyageur == "sain"):
+            couleur = 'green'
+        else:
+            couleur = 'red'
+        
+        # Le cercle représentant le voyageur est de diamètre 80% de la taille d'une cellule, mais minimum 16 pixels
+        if (self.grille.tailleCellule < 16):
+            rayon = 8
+        else:
+            rayon = int(40/100 * self.grille.tailleCellule)
+
+        x0 = self.depart.X*self.grille.tailleCellule + self.grille.tailleCellule/2 - rayon
+        y0 = self.depart.Y*self.grille.tailleCellule + self.grille.tailleCellule/2 - rayon
+        x1 = self.depart.X*self.grille.tailleCellule + self.grille.tailleCellule/2 + rayon
+        y1 = self.depart.Y*self.grille.tailleCellule + self.grille.tailleCellule/2 + rayon
+
+        train = self.grille.grille.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
+        self.grille.grille.update()
+
+        deltaX = (self.arrivee.X - self.depart.X)*self.grille.tailleCellule
+        deltaY = (self.arrivee.Y - self.depart.Y)*self.grille.tailleCellule
+
+        # Tant que le rond n'est pas à l'arrivée
+        while(Position(self.grille.grille.coords(train)[0], self.grille.grille.coords(train)[1]).distance(Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule)) < Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule).distance(Position(self.arrivee.X*self.grille.tailleCellule, self.arrivee.Y*self.grille.tailleCellule))):
+            self.grille.grille.move(train, deltaX*self.deplacement.vitesse, deltaY*self.deplacement.vitesse)
+            self.grille.grille.update()
+            time.sleep(0.025)
+
+        self.grille.grille.delete(train)
+       
 
 
 ############################################################################
