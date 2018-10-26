@@ -279,11 +279,11 @@ class Deplacement:
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
             self.probaVoyage = 3
-            self.vitesse = 0.03 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0.05 # en nombre de fois la distance toutes les 0.025sec
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
             self.probaVoyage = 1
-            self.vitesse = 0.05 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0.1 # en nombre de fois la distance toutes les 0.025sec
         else: # donc cellule inconnue
             self.couleur = 'yellow'
             self.probaVoyage = 0
