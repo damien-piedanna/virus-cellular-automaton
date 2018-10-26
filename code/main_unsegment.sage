@@ -533,14 +533,7 @@ class Grille:
 
                     anim = ThreadAnimation(self, deplacement, depart, arrivee, voyageur)
                     anim.start()
-                    #self.animationDeplacement(deplacement, depart, arrivee, voyageur)
-                    if (voyageur == "infecte"):
-                        if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
-                            self.matCell[arrivee.Y][arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
-                            self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
-                            self.nbInfecte += 1
-                            self.nbSain -= 1
-                            self.grille.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
+
                 else: # Le déplacement est un pont
                     if (self.matCell[depart.Y][depart.X].etat == "infecte"):
                         if(self.matCell[arrivee.Y][arrivee.X].etat == "sain"):
@@ -548,38 +541,6 @@ class Grille:
                             self.nbInfecte += 1
                             self.nbSain -= 1
                             self.grille.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
-
-    # Affiche l'animation d'un voyage sur le deplacement allant de depart à arrivee
-    def animationDeplacement(self, deplacement, depart, arrivee, voyageur):
-        if(voyageur == "sain"):
-            couleur = 'green'
-        else:
-            couleur = 'red'
-        
-        # Le cercle représentant le voyageur est de diamètre 80% de la taille d'une cellule, mais minimum 16 pixels
-        if (self.tailleCellule < 16):
-            rayon = 8
-        else:
-            rayon = int(40/100 * self.tailleCellule)
-
-        x0 = depart.X*self.tailleCellule + self.tailleCellule/2 - rayon
-        y0 = depart.Y*self.tailleCellule + self.tailleCellule/2 - rayon
-        x1 = depart.X*self.tailleCellule + self.tailleCellule/2 + rayon
-        y1 = depart.Y*self.tailleCellule + self.tailleCellule/2 + rayon
-
-        train = self.grille.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
-        self.grille.update()
-
-        deltaX = (arrivee.X - depart.X)*self.tailleCellule
-        deltaY = (arrivee.Y - depart.Y)*self.tailleCellule
-
-        # Tant que le rond n'est pas à l'arrivée
-        while(Position(self.grille.coords(train)[0], self.grille.coords(train)[1]).distance(Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule)) < Position(depart.X*self.tailleCellule, depart.Y*self.tailleCellule).distance(Position(arrivee.X*self.tailleCellule, arrivee.Y*self.tailleCellule))):
-            self.grille.move(train, deltaX*deplacement.vitesse, deltaY*deplacement.vitesse)
-            self.grille.update()
-            time.sleep(0.025)
-
-        self.grille.delete(train)
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
@@ -806,10 +767,10 @@ class ThreadAnimation(threading.Thread):
         else:
             rayon = int(40/100 * self.grille.tailleCellule)
 
-        x0 = self.depart.X*self.grille.tailleCellule + self.grille.tailleCellule/2 - rayon
-        y0 = self.depart.Y*self.grille.tailleCellule + self.grille.tailleCellule/2 - rayon
-        x1 = self.depart.X*self.grille.tailleCellule + self.grille.tailleCellule/2 + rayon
-        y1 = self.depart.Y*self.grille.tailleCellule + self.grille.tailleCellule/2 + rayon
+        x0 = self.depart.X*self.grille.tailleCellule + int(self.grille.tailleCellule/2) - rayon
+        y0 = self.depart.Y*self.grille.tailleCellule + int(self.grille.tailleCellule/2) - rayon
+        x1 = self.depart.X*self.grille.tailleCellule + int(self.grille.tailleCellule/2) + rayon
+        y1 = self.depart.Y*self.grille.tailleCellule + int(self.grille.tailleCellule/2) + rayon
 
         train = self.grille.grille.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
         self.grille.grille.update()
@@ -824,6 +785,14 @@ class ThreadAnimation(threading.Thread):
             time.sleep(0.025)
 
         self.grille.grille.delete(train)
+
+        if (self.voyageur == "infecte"):
+            if(self.grille.matCell[self.arrivee.Y][self.arrivee.X].etat == "sain"):
+                self.grille.matCell[self.arrivee.Y][self.arrivee.X].soigner = True # La cellule d'arrivée n'est infectée que pendant un tour
+                self.grille.matCell[self.arrivee.Y][self.arrivee.X].setEtat("infecte")
+                self.grille.nbInfecte += 1
+                self.grille.nbSain -= 1
+                self.grille.grille.itemconfig(self.grille.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
        
 
 
