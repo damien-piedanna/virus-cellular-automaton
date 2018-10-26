@@ -1,10 +1,12 @@
 # -*- cod# -*- coding: utf-8 -*-
 ############################################################################
 #
-# Ce fichier contient les classes relatives aux cellules de la carte
-# Une cellule peut être :
-# - classique (pas de propriété particulière)
-# - peuplée (dessend de la cellule classique, mais avec plus de paramètres)
+# Projet de modélisation mathématique
+# Groupe :
+# - Aurélien ROBINEAU
+# - Damien PIEDANNA
+# - Nicolas MEYNIEL
+# - Axel PISANI
 #
 ############################################################################
 
@@ -48,6 +50,8 @@ class Cellule:
             bordure = 0
 
         self.carreGraphique = canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
+
+# END Cellule
 
 
 # La classe CellulePopulation représente une cellule peuplée
@@ -109,6 +113,8 @@ class CellulePopulation (Cellule):
         ageMoy = round(ageMoy/nbPers)
         return ageMoy
 
+# END CellulePopulation
+
 
 # La classe Position représente une position 2D dans la grille
 class Position:
@@ -125,16 +131,7 @@ class Position:
     def printPos(self):
         print("Position (" + repr(self.X) + ", " + repr(self.Y) + ")")
 
-
-######################################################################
-#
-# Ce fichier contient les classes relatives aux éléments de la grille
-# Ces éléments peuvent être :
-# - Un fleuve
-# - Une zone urbaine
-# - Un déplacement (d'un point à un autre via un moyen de transport)
-#
-######################################################################
+# END Position
 
 
 # Classe Fleuve représente un fleuve
@@ -204,6 +201,8 @@ class Fleuve:
                 pos.Y += 1
                 pos = copy.deepcopy(pos) # Pos pointe sur une nouvele case mémoire
 
+# END Fleuve
+
 
 # La classe zone urbaine représente des regroupements de population sur la grille
 class ZoneUrbaine:
@@ -255,6 +254,8 @@ class ZoneUrbaine:
         if (distanceZones < self.rayon + zoneUrbaine.rayon):
             return True
         return False
+
+# END ZoneUrbaine
 
 
 # La classe Deplacement représente un moyen de transport allant d'un point à un autre
@@ -314,11 +315,7 @@ class Deplacement:
 
         canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
 
-#############################################################################################
-#
-# Ce fichier contient les classes relatives à la carte sur laquelle se déroule la simulation
-#
-#############################################################################################
+# END Deplacement
 
 
 # La classe Grille représente la carte
@@ -467,7 +464,7 @@ class Grille:
                 i = 0
                 while (i < len(self.fleuve.parcours)):
                     pos = self.fleuve.parcours[i]
-                    if(not(randint(0,10)) and pos.Y+int(self.fleuve.largeur/2)+1 < self.nbCelluleHauteur and pos.Y-int(self.fleuve.largeur/2)-1 >= 0 and pos.X >= 0 and pos.X < self.nbCelluleLargeur):
+                    if(not(randint(0,12)) and pos.Y+int(self.fleuve.largeur/2)+1 < self.nbCelluleHauteur and pos.Y-int(self.fleuve.largeur/2)-1 >= 0 and pos.X >= 0 and pos.X < self.nbCelluleLargeur):
                         # Les cellules de départ et d'arrivée doivent être peuplées
                         if (self.matCell[pos.Y+int(self.fleuve.largeur/2)+1][pos.X].etat == "vide"):
                             self.matCell[pos.Y+int(self.fleuve.largeur/2)+1][pos.X] = CellulePopulation(self.tailleCellule, "sain", CellulePopulation.genenerAgeMoyen(self.nbPers))
@@ -483,7 +480,7 @@ class Grille:
                 i = 0
                 while (i < len(self.fleuve.parcours)):
                     pos = self.fleuve.parcours[i]
-                    if(not(randint(0,10)) and pos.X+int(self.fleuve.largeur/2)+1 < self.nbCelluleLargeur and pos.X-int(self.fleuve.largeur/2)-1 >= 0 and pos.Y >= 0 and pos.Y < self.nbCelluleHauteur):
+                    if(not(randint(0,12)) and pos.X+int(self.fleuve.largeur/2)+1 < self.nbCelluleLargeur and pos.X-int(self.fleuve.largeur/2)-1 >= 0 and pos.Y >= 0 and pos.Y < self.nbCelluleHauteur):
                         if (self.matCell[pos.Y][pos.X+int(self.fleuve.largeur/2)+1].etat == "vide"):
                             self.matCell[pos.Y][pos.X+int(self.fleuve.largeur/2)+1] = CellulePopulation(self.tailleCellule, "sain", CellulePopulation.genenerAgeMoyen(self.nbPers))
                             self.nbSain += 1
@@ -495,6 +492,7 @@ class Grille:
                     else:
                         i += 1
 
+        # Création des autres déplacements
         concatener(self.deplacements, algoPrim(self, "route"))
         concatener(self.deplacements, algoPrim(self, "voieFerree"))
         concatener(self.deplacements, algoPrim(self, "ligneAerienne"))
@@ -698,12 +696,7 @@ class Grille:
     def propagerUneFois (self, event):
         self.propager()
 
-
-#################################################################
-#
-# Ce fichier contient les classes relatives aux thread du projet
-#
-#################################################################
+# END Grille
 
 
 # La classe ThreadCommands permet de lancer un second processus
@@ -742,6 +735,9 @@ class ThreadCommands(threading.Thread):
  
     def continu(self):
         self._pause = False
+
+# END ThreadCommands
+
 
 # La classe ThreadCommands permet l'affichage des voyages
 class ThreadAnimation(threading.Thread):
@@ -793,14 +789,8 @@ class ThreadAnimation(threading.Thread):
                 self.grille.nbInfecte += 1
                 self.grille.nbSain -= 1
                 self.grille.grille.itemconfig(self.grille.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
-       
 
-
-############################################################################
-#
-# Ce fichier contient les classes relatives aux virus propagés sur la carte
-#
-############################################################################
+# END ThreadAnimation
 
 
 # La classe Virus représente le virus à propager
@@ -870,75 +860,8 @@ class Virus:
             self.tauxAge70 = 0.5
             self.tauxAge90 = 0.5
             self.tauxAge100 = 0.5
+# END Virus
 
-
-
-##############################
-#
-# Fichier de départ du projet
-#
-##############################
-
-
-# Lance la simulation
-def lancerSimulation():
-	# Test si les entrées sont bien des entiers
-	try:	
-		nbCellulesHauteur = int(hauteurEntry.get())
-		nbCellulesLargeur = int(largeurEntry.get())
-	except ValueError:
-		return
-
-	# La grille ne peut pas faire moins de 1px de largeur ou de hauteur
-	if (nbCellulesHauteur < 1 or nbCellulesLargeur < 1):
-		return
-
-	nomVirus = var.get()
-
-	# Création de la fenêtre
-	simulation = Tk()
-	simulation.title('Propagation ' + nomVirus)
-
-	# Création compteur de jour
-	compteur = Label(simulation, text="Jour 0")
-	compteur.pack()
-
-	# Affichage du pourcentage de cellules inféctées
-	pctInfecte = Label(simulation, text="Infecte : 0%")
-	pctInfecte.pack()
-
-	# Affiche le nom du virus
-	Label(simulation, text="Virus : " + nomVirus).pack()
-
-	# Création de la grille représentative de la population
-	# Paramètres = fenetre, hauteur, largeur, nomVirus, nb de personne dans un carré
-	grille = Grille(simulation, nbCellulesHauteur, nbCellulesLargeur, Virus(nomVirus), 5)
-	grille.afficher()
-
-	# Création d'un thread pour la propagation
-	commandes = ThreadCommands(grille, compteur, pctInfecte)
-	commandes.start()
-
-	# Arrête le processus créé par le thread lorsque la fenêtre est fermée
-	simulation.protocol("WM_DELETE_WINDOW", commandes.stop)
-
-	# Creation des boutons
-	boutonStart = Button(simulation, text="Start", command=commandes.continu)
-	boutonStart.pack()
-	boutonPause = Button(simulation, text="Pause", command=commandes.pause)
-	boutonPause.pack()
-	boutonStop = Button(simulation, text="Stop", command=commandes.stop)
-	boutonStop.pack()
-
-	# Lancement de la fenêtre
-	simulation.mainloop()
-
-
-###############################################################################################
-#
-# Ce fichier contient toutes les fonctions du projet qui ne sont pas des méthodes d'une classe
-#
-###############################################################################################
 
 # Execute l'algorithme de prim sur le graphe complet composé des centres de toutes
 # les zones urbaines de 'grille' pouvant comporter un deplacement de type 'genre'
@@ -1019,8 +942,62 @@ def concatener(liste1, liste2):
         liste1.append(liste2[i])
 
 
+# Lance la simulation
+def lancerSimulation():
+	# Test si les entrées sont bien des entiers
+	try:	
+		nbCellulesHauteur = int(hauteurEntry.get())
+		nbCellulesLargeur = int(largeurEntry.get())
+	except ValueError:
+		return
 
-# FONCTION MAIN #
+	# La grille ne peut pas faire moins de 1px de largeur ou de hauteur
+	if (nbCellulesHauteur < 1 or nbCellulesLargeur < 1):
+		return
+
+	nomVirus = var.get()
+
+	# Création de la fenêtre
+	simulation = Tk()
+	simulation.title('Propagation ' + nomVirus)
+
+	# Création compteur de jour
+	compteur = Label(simulation, text="Jour 0")
+	compteur.pack()
+
+	# Affichage du pourcentage de cellules inféctées
+	pctInfecte = Label(simulation, text="Infecte : 0%")
+	pctInfecte.pack()
+
+	# Affiche le nom du virus
+	Label(simulation, text="Virus : " + nomVirus).pack()
+
+	# Création de la grille représentative de la population
+	# Paramètres = fenetre, hauteur, largeur, nomVirus, nb de personne dans un carré
+	grille = Grille(simulation, nbCellulesHauteur, nbCellulesLargeur, Virus(nomVirus), 5)
+	grille.afficher()
+
+	# Création d'un thread pour la propagation
+	commandes = ThreadCommands(grille, compteur, pctInfecte)
+	commandes.start()
+
+	# Arrête le processus créé par le thread lorsque la fenêtre est fermée
+	simulation.protocol("WM_DELETE_WINDOW", commandes.stop)
+
+	# Creation des boutons
+	boutonStart = Button(simulation, text="Start", command=commandes.continu)
+	boutonStart.pack()
+	boutonPause = Button(simulation, text="Pause", command=commandes.pause)
+	boutonPause.pack()
+	boutonStop = Button(simulation, text="Stop", command=commandes.stop)
+	boutonStop.pack()
+
+	# Lancement de la fenêtre
+	simulation.mainloop()
+
+
+# FONCTION MAIN
+
 virus = ["Peste noire", "Rougeole", "Coqueluche", "Diphtérie", "Variole", "Poliomyélite", "Grippe"]
 radioVirus = []
 
