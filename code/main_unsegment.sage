@@ -986,11 +986,11 @@ def lancerSimulation():
 
 	# Creation des boutons
 	boutonStart = Button(simulation, text="Start", command=commandes.continu)
-	boutonStart.pack()
+	boutonStart.pack(side="left")
 	boutonPause = Button(simulation, text="Pause", command=commandes.pause)
-	boutonPause.pack()
+	boutonPause.pack(side="left")
 	boutonStop = Button(simulation, text="Stop", command=commandes.stop)
-	boutonStop.pack()
+	boutonStop.pack(side="left")
 
 	# Lancement de la fenêtre
 	simulation.mainloop()
@@ -1008,13 +1008,13 @@ root.title('Menu')
 # Entrée nombre de cellules hauteur
 Label(root, text="Nombre de cellule en hauteur").pack()
 hauteurDefaut = StringVar(root, value='60')
-hauteurEntry = Entry(root, textvariable=hauteurDefaut)
+hauteurEntry = Entry(root, textvariable=hauteurDefaut, borderwidth=5)
 hauteurEntry.pack()
 
 # Entrée nombre de cellules largeur
 Label(root, text="Nombre de cellule en largeur").pack()
 largeurDefaut = StringVar(root, value='90')
-largeurEntry = Entry(root, textvariable=largeurDefaut)
+largeurEntry = Entry(root, textvariable=largeurDefaut, borderwidth=5)
 largeurEntry.pack()
 
 # Proposition des virus
