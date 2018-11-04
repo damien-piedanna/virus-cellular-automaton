@@ -989,6 +989,7 @@ class Grille:
             tauxAge = self.virus.tauxAge100
 
         if (cptSain+tauxContact > 0):
+            # http://ism.uqam.ca/~ism//pdf/Arino.pdf
             # Selon l'incidence proportionnelle, la probabilité d'infection est de :
             # B*(SI/(S+I)) avec B coefficient de transmition de la maladie, S le nombre de cellules suceptibles d'être infectées, I le nombre d'infectés
             # Cette formule étant générale, on la multiple par les chances d'infections en fonction de l'age
