@@ -344,11 +344,11 @@ class Virus:
             self.tauxLetalite = 0
             # https://fr.wikipedia.org/wiki/rougeole
             self.tauxAge3 = 0.8
-            self.tauxAge15 = 0.8
-            self.tauxAge50 = 0.5
-            self.tauxAge70 = 0.05
-            self.tauxAge90 = 0.05
-            self.tauxAge100 = 0.05
+            self.tauxAge15 = 0.5
+            self.tauxAge50 = 0.05
+            self.tauxAge70 = 0.01
+            self.tauxAge90 = 0.01
+            self.tauxAge100 = 0.01
 
         elif (self.label == "diphtérie"):
             self.tauxReproduction = 8 #TODO
@@ -366,8 +366,8 @@ class Virus:
 
         elif (self.label == "poliomyélite"):
             self.tauxReproduction = 4 #TODO
-            # Pas de donnée précise mais paralysie donc on suppose que c'est assez long
-            self.duree = 100
+            # https://www.mesvaccins.net/web/diseases/4-poliomyelite
+            self.duree = 50
             # https://www.wiv-isp.be/matra/Fiches/Polio.pdf
             self.tauxLetalite = 10
             # http://www.who.int/features/factfiles/polio/fr/
@@ -383,7 +383,7 @@ class Virus:
             # Durée entre 4 et 7 jours
             self.duree = 7
             # https://fr.wikipedia.org/wiki/Grippe
-            self.tauxLetalite = 1 # entre 2 et 7 millions d'infectés par ans et 350 morts
+            self.tauxLetalite = 1 # entre 2 et 7 millions d'infectés par ans et 1000 morts
             # https://www.inserm.fr/information-en-sante/dossiers-information/grippe
             self.tauxAge3 = 0.7
             self.tauxAge15 = 0.5
@@ -991,8 +991,9 @@ class Grille:
         if (cptSain+tauxContact > 0):
             # Selon l'incidence proportionnelle, la probabilité d'infection est de :
             # B*(SI/(S+I)) avec B coefficient de transmition de la maladie, S le nombre de cellules suceptibles d'être infectées, I le nombre d'infectés
+            # Cette formule étant générale, on la multiple par les chances d'infections en fonction de l'age
             # Ici le nombre d'infectés est tauxContact
-            tauxInfection = self.virus.tauxReproduction*((cptSain*tauxContact)/(cptSain+tauxContact))
+            tauxInfection = self.virus.tauxReproduction*((cptSain*tauxContact)/(cptSain+tauxContact)) * tauxAge
 
         if (tauxInfection > 0):
             #Defini si la cellule devient infectée
