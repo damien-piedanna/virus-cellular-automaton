@@ -301,7 +301,7 @@ class Deplacement:
         x1 = (self.pos2.X*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
         y1 = (self.pos2.Y*self.tailleCellule)+self.tailleCellule - int(10/100 * self.tailleCellule)
         canvas.create_oval(x0, y0, x1, y1, fill=self.couleur, width=0)
-        
+
         x0 = self.pos1.X*self.tailleCellule + int(self.tailleCellule/2)
         y0 = self.pos1.Y*self.tailleCellule + int(self.tailleCellule/2)
         x1 = self.pos2.X*self.tailleCellule + int(self.tailleCellule/2)
@@ -337,17 +337,17 @@ class Grille:
         if (nbCelluleLargeur*self.tailleCellule > largeurEcranPx):
             self.tailleCellule = int(largeurEcranPx/nbCelluleLargeur)
 
-        self.grille = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
+        self.zoneDessin = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
         self.matCell = []
-
         self.deplacements = []
+        self.animations = []
 
         # Affectation des actions de la souris
-        self.grille.bind("<Button-1>", self.infecterManu)
-        self.grille.bind("<Button-2>", self.propagerUneFois)
-        self.grille.bind("<Button-3>", self.guerirManu)
-        self.grille.pack()
+        self.zoneDessin.bind("<Button-1>", self.infecterManu)
+        self.zoneDessin.bind("<Button-2>", self.propagerUneFois)
+        self.zoneDessin.bind("<Button-3>", self.guerirManu)
+        self.zoneDessin.pack()
 
         # Création des zones urbaines
         self.zonesUrbaines = self.genererZonesUrbaines()
@@ -497,7 +497,7 @@ class Grille:
         concatener(self.deplacements, algoPrim(self, "voieFerree"))
         concatener(self.deplacements, algoPrim(self, "ligneAerienne"))
 
-    def lancerVoyages(self):
+    def lancerVoyages(self, Thread):
         for i in range (len(self.deplacements)):
             deplacement = self.deplacements[i]
             # Probabilité qu'un voyage soit réalisé
@@ -528,9 +528,11 @@ class Grille:
                         voyageur = "infecte"
                     else:
                         voyageur = "sain"
-
-                    anim = ThreadAnimation(self, deplacement, depart, arrivee, voyageur)
-                    anim.start()
+                        
+                    if (not(Thread._pause)):
+                        anim = ThreadAnimation(self, deplacement, depart, arrivee, voyageur)
+                        self.animations.append(anim)
+                        anim.start()
 
                 else: # Le déplacement est un pont
                     if (self.matCell[depart.Y][depart.X].etat == "infecte"):
@@ -538,20 +540,20 @@ class Grille:
                             self.matCell[arrivee.Y][arrivee.X].setEtat("infecte")
                             self.nbInfecte += 1
                             self.nbSain -= 1
-                            self.grille.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
+                            self.zoneDessin.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
 
     # Afficher tous les déplacements de la grille
     def afficherDeplacements(self):
         for i in range (len(self.deplacements)):
-            self.deplacements[i].afficher(self.grille)
+            self.deplacements[i].afficher(self.zoneDessin)
 
     # Affiche la grille
     def afficher(self):
         for y in range(len(self.matCell)):
             for x in range(len(self.matCell[0])):
-                self.matCell[y][x].afficher(self.grille, x, y)
+                self.matCell[y][x].afficher(self.zoneDessin, x, y)
         self.afficherDeplacements()
-        self.grille.update()
+        self.zoneDessin.update()
 
 
     # Infecte la cellule lorsqu'on clique gauche dessus
@@ -564,7 +566,7 @@ class Grille:
 
         if(self.matCell[j][i].etat == "sain"):
             self.matCell[j][i].setEtat("infecte")
-            self.grille.itemconfig(self.matCell[j][i].carreGraphique, fill='red')
+            self.zoneDessin.itemconfig(self.matCell[j][i].carreGraphique, fill='red')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") infectée manuellement.")
             self.nbSain -= 1
             self.nbInfecte += 1
@@ -584,7 +586,7 @@ class Grille:
 
         if(self.matCell[j][i].etat == "infecte"):
             self.matCell[j][i].setEtat("sain")
-            self.grille.itemconfig(self.matCell[j][i].carreGraphique, fill='green')
+            self.zoneDessin.itemconfig(self.matCell[j][i].carreGraphique, fill='green')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") guérie manuellement.")
             self.nbSain += 1
             self.nbInfecte -= 1
@@ -595,80 +597,191 @@ class Grille:
                     zone.nbInfecte -= 1
 
     # Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest
-    def soumettreAuVirus (self, matDeTest,posX, posY):
-        tauxInfection = 0.0
+    def soumettreAuVirus (self, matDeTest, posX, posY):
+        tauxInfection = 0 # Probabilité qu'une cellule devienne infectée
+        tauxContact = 0.0 # Taux de contact de la cellule courante avec les cellules infectées alentoures
+        cptSain = 0 # Nombre de cellules saines dans un rayon de 2
+        # On considère que la cellule courante XX peut entrer en contact avec les cellules dans un rayon de 2 cellules
         # 01 02 03 04 05 #
         # 06 07 08 09 10 #
         # 11 12 XX 13 14 #
         # 15 16 17 18 19 #
         # 20 21 22 23 24 #
 
-        #Récupère le nombre de cellule inféctées pour chaque cellule et ajoute si c'est le cas un taux.
+        # Récupère le nombre de cellule inféctées pour chaque cellule et ajoute si c'est le cas un taux.
+        # Les cases sont traitée dans de gauche à droite en partant du haut sur le schéma ci-dessus
         if(posY >= 2):
-            if (posX >= 2 and matDeTest[posY-2][posX-2].etat == "infecte"): #1
-                tauxInfection = tauxInfection + 0.25
-            if (posX >= 1 and matDeTest[posY-2][posX-1].etat == "infecte"): #2
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur and matDeTest[posY-2][posX].etat == "infecte"): #3
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-2][posX+1].etat == "infecte"): #4
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-2][posX+2].etat == "infecte"): #5
-                tauxInfection = tauxInfection + 0.25
+            if (posX >= 2):
+                if(matDeTest[posY-2][posX-2].etat == "infecte"): #1
+                    tauxContact += 0.25
+                elif(matDeTest[posY-2][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY-2][posX-1].etat == "infecte"): #2
+                    tauxContact += 0.5
+                elif(matDeTest[posY-2][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY-2][posX].etat == "infecte"): #3
+                    tauxContact += 0.75
+                elif(matDeTest[posY-2][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY-2][posX+1].etat == "infecte"): #4
+                    tauxContact += 0.5
+                elif(matDeTest[posY-2][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY-2][posX+2].etat == "infecte"): #5
+                    tauxContact += 0.25
+                elif(matDeTest[posY-2][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY >= 1 ):
-            if (posX >= 2 and matDeTest[posY-1][posX-2].etat == "infecte"): #6
-                tauxInfection = tauxInfection + 0.5
-            if (posX >= 1 and matDeTest[posY-1][posX-1].etat == "infecte"): #7
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur and matDeTest[posY-1][posX].etat == "infecte"): #8
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY-1][posX+1].etat == "infecte"): #9
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY-1][posX+2].etat == "infecte"): #10
-                tauxInfection = tauxInfection + 0.5
+            if (posX >= 2):
+                if(matDeTest[posY-1][posX-2].etat == "infecte"): #6
+                    tauxContact += 0.5
+                elif(matDeTest[posY-1][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY-1][posX-1].etat == "infecte"): #7
+                    tauxContact += 0.75
+                elif(matDeTest[posY-1][posX-1].etat == "sain"):
+                    cptSain =+ 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY-1][posX].etat == "infecte"): #8
+                    tauxContact += 1
+                elif(matDeTest[posY-1][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY-1][posX+1].etat == "infecte"): #9
+                    tauxContact += 0.75
+                elif(matDeTest[posY-1][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY-1][posX+2].etat == "infecte"): #10
+                    tauxContact += 0.5
+                elif(matDeTest[posY-1][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur):
-            if (posX >= 2 and matDeTest[posY][posX-2].etat == "infecte"): #11
-                tauxInfection = tauxInfection + 0.75
-            if (posX >= 1 and matDeTest[posY][posX-1].etat == "infecte"): #12
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY][posX+1].etat == "infecte"): #13
-                tauxInfection = tauxInfection + 1        
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY][posX+2].etat == "infecte"): #14
-                tauxInfection = tauxInfection + 0.75
+            if (posX >= 2):
+                if(matDeTest[posY][posX-2].etat == "infecte"): #11
+                    tauxContact += 0.75
+                elif(matDeTest[posY][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY][posX-1].etat == "infecte"): #12
+                    tauxContact += 1
+                elif(matDeTest[posY][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY][posX+1].etat == "infecte"): #13
+                    tauxContact += 1
+                elif(matDeTest[posY][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY][posX+2].etat == "infecte"): #14
+                    tauxContact += 0.75
+                elif(matDeTest[posY][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur-1):
-            if (posX >= 2 and matDeTest[posY+1][posX-2].etat == "infecte"): #15
-                tauxInfection = tauxInfection + 0.5
-            if (posX >= 1 and matDeTest[posY+1][posX-1].etat == "infecte"): #16
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur and matDeTest[posY+1][posX].etat == "infecte"): #17
-                tauxInfection = tauxInfection + 1
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+1][posX+1].etat == "infecte"): #18
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+1][posX+2].etat == "infecte"): #19
-                tauxInfection = tauxInfection + 0.5
+            if (posX >= 2):
+                if(matDeTest[posY+1][posX-2].etat == "infecte"): #15
+                    tauxContact += 0.5
+                elif(matDeTest[posY+1][posX-2].etat == "sain"):
+                    cptSain += 1
+
+            if (posX >= 1):
+                if(matDeTest[posY+1][posX-1].etat == "infecte"): #16
+                    tauxContact += 0.75
+                elif(matDeTest[posY+1][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY+1][posX].etat == "infecte"): #17
+                    tauxContact += 1
+                elif(matDeTest[posY+1][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY+1][posX+1].etat == "infecte"): #18
+                    tauxContact += 0.75
+                elif(matDeTest[posY+1][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY+1][posX+2].etat == "infecte"): #19
+                    tauxContact += 0.5
+                elif(matDeTest[posY+1][posX+2].etat == "sain"):
+                    cptSain += 1
 
         if(posY < self.nbCelluleHauteur-2):
-            if (posX >= 2 and matDeTest[posY+2][posX-2].etat == "infecte"): #20
-                tauxInfection = tauxInfection + 0.25
-            if (posX >= 1 and matDeTest[posY+2][posX-1].etat == "infecte"): #21
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur and matDeTest[posY+2][posX].etat == "infecte"): #22
-                tauxInfection = tauxInfection + 0.75
-            if (posX < self.nbCelluleLargeur-1 and matDeTest[posY+2][posX+1].etat == "infecte"): #23
-                tauxInfection = tauxInfection + 0.5
-            if (posX < self.nbCelluleLargeur-2 and matDeTest[posY+2][posX+2].etat == "infecte"): #24
-                tauxInfection = tauxInfection + 0.25
+            if (posX >= 2):
+                if(matDeTest[posY+2][posX-2].etat == "infecte"): #20
+                    tauxContact += 0.25
+                elif(matDeTest[posY+2][posX-2].etat == "sain"):
+                    cptSain += 1
 
+            if (posX >= 1):
+                if(matDeTest[posY+2][posX-1].etat == "infecte"): #21
+                    tauxContact += 0.5
+                elif(matDeTest[posY+2][posX-1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur):
+                if(matDeTest[posY+2][posX].etat == "infecte"): #22
+                    tauxContact += 0.75
+                elif(matDeTest[posY+2][posX].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-1):
+                if(matDeTest[posY+2][posX+1].etat == "infecte"): #23
+                    tauxContact += 0.5
+                elif(matDeTest[posY+2][posX+1].etat == "sain"):
+                    cptSain += 1
+
+            if (posX < self.nbCelluleLargeur-2):
+                if(matDeTest[posY+2][posX+2].etat == "infecte"): #24
+                    tauxContact += 0.25
+                elif(matDeTest[posY+2][posX+2].etat == "sain"):
+                    cptSain += 1
+
+        if (matDeTest[posY][posX].moyenneAge <= 15):
+            tauxAge = self.virus.tauxAge15
+        elif (matDeTest[posY][posX].moyenneAge <= 50):
+            tauxAge = self.virus.tauxAge50
+        elif (matDeTest[posY][posX].moyenneAge <= 70):
+            tauxAge = self.virus.tauxAge70
+        elif (matDeTest[posY][posX].moyenneAge <= 90):
+            tauxAge = self.virus.tauxAge90
+        else:
+            tauxAge = self.virus.tauxAge100
+
+        if (cptSain+tauxContact > 0):
+            # Selon l'incidence proportionnelle, la probabilité d'infection est de :
+            # B*(SI/(S+I)) avec B coefficient de transmition de la maladie, S le nombre de cellules suceptibles d'être infectées, I le nombre d'infectés
+            # Ici le nombre d'infectés est tauxContact
+            tauxInfection = self.virus.tauxReproduction*((cptSain*tauxContact)/(cptSain+tauxContact))
 
         if (tauxInfection > 0):
             #Defini si la cellule devient infectée
             nbAlea = randint(0,100)
             if (nbAlea < tauxInfection*self.virus.tauxReproduction):
                 self.matCell[posY][posX].setEtat("infecte")
-                self.grille.itemconfig(self.matCell[posY][posX].carreGraphique, fill='red')
+                self.zoneDessin.itemconfig(self.matCell[posY][posX].carreGraphique, fill='red')
                 self.nbSain = self.nbSain - 1
                 self.nbInfecte = self.nbInfecte + 1
                 for numZone in range (len(self.zonesUrbaines)):
@@ -689,10 +802,9 @@ class Grille:
                     self.matCell[y][x].setEtat("sain")
                     self.nbInfecte -= 1
                     self.nbSain += 1
-                    self.grille.itemconfig(self.matCell[y][x].carreGraphique, fill='green')
-        self.lancerVoyages()
+                    self.zoneDessin.itemconfig(self.matCell[y][x].carreGraphique, fill='green')
 
-    # Propage le virus d'un jour                
+    # Propage le virus d'un jour
     def propagerUneFois (self, event):
         self.propager()
 
@@ -708,33 +820,40 @@ class ThreadCommands(threading.Thread):
         self.grille = grille
         self.compteur = compteur
         self.pctInfecte = pctInfecte
- 
+
     def run(self):
         self._actif = True
         cpt = 0
+        pct = 0
         while self._actif:
-            if self._pause:
-                time.sleep(0.1)
-                continue
             time.sleep (0.5)
-            self.grille.propager()
-            cpt = cpt +1
-            self.compteur.config(text="Jour " + repr(cpt))
-            pct = int(self.grille.nbInfecte*100/(self.grille.nbInfecte + self.grille.nbSain))
-            self.pctInfecte.config(text="Infectes: " + repr(pct) + "%")
+            if (not(self._pause)):
+                self.grille.propager()
+                self.grille.lancerVoyages(self)
+                cpt = cpt +1
+                self.compteur.config(text="Jour " + repr(cpt))
+                pct = int(self.grille.nbInfecte*100/(self.grille.nbInfecte + self.grille.nbSain))
+                self.pctInfecte.config(text="Infectes: " + repr(pct) + "%")
+
             # Arrêt si grille totalement infectée
             if (pct>=100):
                 self.pause()
- 
+
     def stop(self):
         self._actif = False
+        for anim in self.grille.animations:
+            anim.stop()
         sys.exit("Arrêt du programme...")
- 
+
     def pause(self):
         self._pause = True
- 
+        for anim in self.grille.animations:
+            anim.pause()
+
     def continu(self):
         self._pause = False
+        for anim in self.grille.animations:
+            anim.continu()
 
 # END ThreadCommands
 
@@ -743,20 +862,20 @@ class ThreadCommands(threading.Thread):
 class ThreadAnimation(threading.Thread):
     def __init__(self, grille, deplacement, depart, arrivee, voyageur):
         threading.Thread.__init__(self)
-        print("init anim")
+        self._actif = True
+        self._pause = False
         self.grille = grille
         self.deplacement = deplacement
         self.depart = depart
         self.arrivee = arrivee
         self.voyageur = voyageur
- 
+
     def run(self):
-    	print("run trhad")
         if(self.voyageur == "sain"):
             couleur = 'green'
         else:
             couleur = 'red'
-        
+
         # Le cercle représentant le voyageur est de diamètre 80% de la taille d'une cellule, mais minimum 16 pixels
         if (self.grille.tailleCellule < 16):
             rayon = 8
@@ -768,19 +887,20 @@ class ThreadAnimation(threading.Thread):
         x1 = self.depart.X*self.grille.tailleCellule + int(self.grille.tailleCellule/2) + rayon
         y1 = self.depart.Y*self.grille.tailleCellule + int(self.grille.tailleCellule/2) + rayon
 
-        train = self.grille.grille.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
-        self.grille.grille.update()
+        train = self.grille.zoneDessin.create_oval(x0, y0, x1, y1, fill=couleur, width=2)
+        self.grille.zoneDessin.update()
 
         deltaX = (self.arrivee.X - self.depart.X)*self.grille.tailleCellule
         deltaY = (self.arrivee.Y - self.depart.Y)*self.grille.tailleCellule
 
         # Tant que le rond n'est pas à l'arrivée
-        while(Position(self.grille.grille.coords(train)[0], self.grille.grille.coords(train)[1]).distance(Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule)) < Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule).distance(Position(self.arrivee.X*self.grille.tailleCellule, self.arrivee.Y*self.grille.tailleCellule))):
-            self.grille.grille.move(train, deltaX*self.deplacement.vitesse, deltaY*self.deplacement.vitesse)
-            self.grille.grille.update()
+        while(Position(self.grille.zoneDessin.coords(train)[0], self.grille.zoneDessin.coords(train)[1]).distance(Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule)) < Position(self.depart.X*self.grille.tailleCellule, self.depart.Y*self.grille.tailleCellule).distance(Position(self.arrivee.X*self.grille.tailleCellule, self.arrivee.Y*self.grille.tailleCellule))):
+            if (not(self._pause)):
+                self.grille.zoneDessin.move(train, deltaX*self.deplacement.vitesse, deltaY*self.deplacement.vitesse)
+                self.grille.zoneDessin.update()
             time.sleep(0.025)
 
-        self.grille.grille.delete(train)
+        self.grille.zoneDessin.delete(train)
 
         if (self.voyageur == "infecte"):
             if(self.grille.matCell[self.arrivee.Y][self.arrivee.X].etat == "sain"):
@@ -788,7 +908,16 @@ class ThreadAnimation(threading.Thread):
                 self.grille.matCell[self.arrivee.Y][self.arrivee.X].setEtat("infecte")
                 self.grille.nbInfecte += 1
                 self.grille.nbSain -= 1
-                self.grille.grille.itemconfig(self.grille.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
+                self.grille.zoneDessin.itemconfig(self.grille.matCell[self.arrivee.Y][self.arrivee.X].carreGraphique, fill='red')
+
+    def stop(self):
+        self._actif = False
+
+    def pause(self):
+        self._pause = True
+
+    def continu(self):
+        self._pause = False
 
 # END ThreadAnimation
 
@@ -848,7 +977,7 @@ class Virus:
         elif (self.label == "Grippe"):
             self.tauxReproduction = 2
             self.tauxAge15 = 0.5
-            self.tauxAge50 = 0.3 
+            self.tauxAge50 = 0.3
             self.tauxAge70 = 0.4
             self.tauxAge90 = 0.5
             self.tauxAge100 = 0.6
@@ -860,6 +989,7 @@ class Virus:
             self.tauxAge70 = 0.5
             self.tauxAge90 = 0.5
             self.tauxAge100 = 0.5
+
 # END Virus
 
 
@@ -922,7 +1052,7 @@ def algoPrim(grille, genre):
                 # On ne teste l'arête qui si elle commence dans un sommet du nouveau graphe mais se termine en dehors
                 if (som1Visit and not(som2Visit)):
                     testerArete = True
-    
+
                 # On cherche l'arête de plus petit poids
                 if (testerArete and sommets[i].distance(sommets[j]) < distancePrev):
                     distancePrev = sommets[i].distance(sommets[j])
@@ -945,7 +1075,7 @@ def concatener(liste1, liste2):
 # Lance la simulation
 def lancerSimulation():
 	# Test si les entrées sont bien des entiers
-	try:	
+	try:
 		nbCellulesHauteur = int(hauteurEntry.get())
 		nbCellulesLargeur = int(largeurEntry.get())
 	except ValueError:
@@ -985,43 +1115,44 @@ def lancerSimulation():
 	simulation.protocol("WM_DELETE_WINDOW", commandes.stop)
 
 	# Creation des boutons
-	boutonStart = Button(simulation, text="Start", command=commandes.continu)
+	boutonStart = Button(simulation, text="Start", bg="green", command=commandes.continu)
 	boutonStart.pack(side="left")
-	boutonPause = Button(simulation, text="Pause", command=commandes.pause)
+	boutonPause = Button(simulation, text="Pause", bg="orange", command=commandes.pause)
 	boutonPause.pack(side="left")
-	boutonStop = Button(simulation, text="Stop", command=commandes.stop)
+	boutonStop = Button(simulation, text="Stop", bg="red", command=commandes.stop)
 	boutonStop.pack(side="left")
 
 	# Lancement de la fenêtre
 	simulation.mainloop()
 
 
-# FONCTION MAIN
+#### FONCTION MAIN ####
 
 virus = ["Peste noire", "Rougeole", "Coqueluche", "Diphtérie", "Variole", "Poliomyélite", "Grippe"]
 radioVirus = []
 
 root = Tk()
-
 root.title('Menu')
+root.geometry("300x400")
+root.configure(bg="white")
 
 # Entrée nombre de cellules hauteur
-Label(root, text="Nombre de cellule en hauteur").pack()
+Label(root, text="Nombre de cellule en hauteur", bg="white").pack()
 hauteurDefaut = StringVar(root, value='60')
-hauteurEntry = Entry(root, textvariable=hauteurDefaut, borderwidth=5)
+hauteurEntry = Entry(root, textvariable=hauteurDefaut, borderwidth=1)
 hauteurEntry.pack()
 
 # Entrée nombre de cellules largeur
-Label(root, text="Nombre de cellule en largeur").pack()
+Label(root, text="Nombre de cellule en largeur", bg="white").pack()
 largeurDefaut = StringVar(root, value='90')
-largeurEntry = Entry(root, textvariable=largeurDefaut, borderwidth=5)
+largeurEntry = Entry(root, textvariable=largeurDefaut, borderwidth=1)
 largeurEntry.pack()
 
 # Proposition des virus
 var = StringVar()
-Label(root, text="Choisir le virus").pack()
+Label(root, text="Choisir le virus", bg="white").pack()
 for i in range (len(virus)):
-	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i],borderwidth=5))
+	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i],borderwidth=8 , bg="white"))
 	radioVirus[i].pack()
 
 # On selectionne par defaut le premier virus
@@ -1030,7 +1161,7 @@ for radio in radioVirus:
 radioVirus[0].select()
 
 # Bouton pour lancer la simulation
-boutonBegin = Button(root, text="Commencer", command=lancerSimulation, activebackground="chartreuse", background="lime green", borderwidth=5)
+boutonBegin = Button(root, text="Commencer", command=lancerSimulation, activebackground="chartreuse", background="lime green", borderwidth=1)
 boutonBegin.pack()
 
 root.mainloop()
