@@ -18,8 +18,7 @@ import copy
 from random import *
 from math import sqrt
 
-
-# La classe carré représente une cellule de la grille non peuplée
+# La classe cellule représente une cellule de la grille non peuplée
 class Cellule:
     def __init__(self, tailleCellule, etat):
 
@@ -50,7 +49,6 @@ class Cellule:
             bordure = 0
 
         self.carreGraphique = canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
-
 # END Cellule
 
 
@@ -60,14 +58,18 @@ class CellulePopulation (Cellule):
         self.soigner = False # Défini si la cellule doit être soignée au tour suivant
         self.tailleCellule = tailleCellule
         self.moyenneAge = moyenneAge
+        self.nbJourInfection = 0
         self.setEtat(etat)
 
     def setEtat (self, etat):
         self.etat = etat
         if (self.etat == "sain"):
             self.couleur = 'green'
+            self.nbJourInfection = 0
         elif (self.etat == "infecte"):
             self.couleur = 'red'
+        elif (self.etat == "mort"):
+            self.couleur = 'gray'
         else: # donc cellule inconnue
             self.couleur = 'yellow'
 
@@ -112,7 +114,6 @@ class CellulePopulation (Cellule):
 
         ageMoy = round(ageMoy/nbPers)
         return ageMoy
-
 # END CellulePopulation
 
 
@@ -130,7 +131,6 @@ class Position:
 
     def printPos(self):
         print("Position (" + repr(self.X) + ", " + repr(self.Y) + ")")
-
 # END Position
 
 
@@ -200,7 +200,6 @@ class Fleuve:
                 pos.X = randint(pos.X-1, pos.X+1)
                 pos.Y += 1
                 pos = copy.deepcopy(pos) # Pos pointe sur une nouvele case mémoire
-
 # END Fleuve
 
 
@@ -211,6 +210,7 @@ class ZoneUrbaine:
         self.pos = Position(randint(0, grille.nbCelluleLargeur-1), randint(0, grille.nbCelluleHauteur-1))
         self.nbSain = 0
         self.nbInfecte = 0
+        self.nbMort = 0
 
         if (self.genre == "Metropole"): # Rayon entre 1/3 et 1/2 de la taille maximale de la grille
             if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
@@ -254,7 +254,6 @@ class ZoneUrbaine:
         if (distanceZones < self.rayon + zoneUrbaine.rayon):
             return True
         return False
-
 # END ZoneUrbaine
 
 
@@ -314,7 +313,6 @@ class Deplacement:
             epaisseur = 3 # Sinon difficilement visible
 
         canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
-
 # END Deplacement
 
 
@@ -330,6 +328,7 @@ class Grille:
         self.nbPers = nbPers
         self.nbInfecte = 0
         self.nbSain = 0
+        self.nbMort = 0
 
         hauteurEcranPx = fenetre.winfo_screenheight()
         largeurEcranPx = fenetre.winfo_screenwidth()
@@ -513,22 +512,26 @@ class Grille:
                 if (deplacement.etat != "pont"):
                     # Récupération de la zone urbaine de départ
                     zone = 0
-                    for numZone in range (len(self.zonesUrbaines)):
-                        zone = self.zonesUrbaines[numZone]
+                    for zone in self.zonesUrbaines:
                         if (zone.pos == depart):
                             break
 
                     # On détermine si le voyageur est sain en fonction du nombre de sains dans la zone de départ
                     if (zone.nbSain+zone.nbInfecte == 0):
                         tauxInfecte = 0
+                        tauxSain = 0
                     else:
-                        tauxInfecte = (zone.nbInfecte*100/(zone.nbSain+zone.nbInfecte))
+                        tauxInfecte = (zone.nbInfecte*100/(zone.nbSain+zone.nbInfecte+zone.nbMort))
+                        tauxSain = (zone.nbSain*100/(zone.nbSain+zone.nbInfecte+zone.nbMort))
 
                     if (randint(0, 100) < tauxInfecte):
                         voyageur = "infecte"
-                    else:
+                    elif (randint(0, 100) < tauxSain):
                         voyageur = "sain"
-                        
+                    else:
+                        # Pas de voyage si le voyageur est mort
+                        continue
+
                     if (not(Thread._pause)):
                         anim = ThreadAnimation(self, deplacement, depart, arrivee, voyageur)
                         self.animations.append(anim)
@@ -784,8 +787,7 @@ class Grille:
                 self.zoneDessin.itemconfig(self.matCell[posY][posX].carreGraphique, fill='red')
                 self.nbSain = self.nbSain - 1
                 self.nbInfecte = self.nbInfecte + 1
-                for numZone in range (len(self.zonesUrbaines)):
-                    zone = self.zonesUrbaines[numZone]
+                for zone in self.zonesUrbaines:
                     if (zone.contient(Position(posX,posY))):
                         zone.nbSain -= 1
                         zone.nbInfecte += 1
@@ -797,34 +799,47 @@ class Grille:
             for x in range(self.nbCelluleLargeur):
                 if (self.matCell[y][x].etat == "sain"):
                     self.soumettreAuVirus(matDeTest, x, y)
-                elif (self.matCell[y][x].etat == "infecte" and self.matCell[y][x].soigner == True): # Soigne les cellules infectées temporairement
-                    self.matCell[y][x].soigner = False
-                    self.matCell[y][x].setEtat("sain")
-                    self.nbInfecte -= 1
-                    self.nbSain += 1
-                    self.zoneDessin.itemconfig(self.matCell[y][x].carreGraphique, fill='green')
+                elif (self.matCell[y][x].etat == "infecte"):
+                    if (self.matCell[y][x].soigner == True): # Soigne les cellules infectées temporairement
+                        self.matCell[y][x].soigner = False
+                        self.matCell[y][x].setEtat("sain")
+                        self.zoneDessin.itemconfig(self.matCell[y][x].carreGraphique, fill='green')
+                        self.nbInfecte -= 1
+                        self.nbSain += 1
+                    else:
+                        self.matCell[y][x].nbJourInfection += 1
+                        if (self.matCell[y][x].nbJourInfection > self.virus.tempsFatalite):
+                            self.matCell[y][x].setEtat("mort")
+                            self.zoneDessin.itemconfig(self.matCell[y][x].carreGraphique, fill='gray')
+                            self.nbInfecte -= 1
+                            self.nbMort += 1
+                            for zone in self.zonesUrbaines:
+                                if (zone.contient(Position(x,y))):
+                                    zone.nbInfecte -= 1
+                                    zone.nbMort += 1
 
     # Propage le virus d'un jour
     def propagerUneFois (self, event):
         self.propager()
-
 # END Grille
 
 
 # La classe ThreadCommands permet de lancer un second processus
 class ThreadCommands(threading.Thread):
-    def __init__(self, grille, compteur, pctInfecte):
+    def __init__(self, grille, compteur, pctInfecte, pctMort):
         threading.Thread.__init__(self)
         self._actif = False
         self._pause = True
         self.grille = grille
         self.compteur = compteur
         self.pctInfecte = pctInfecte
+        self.pctMort = pctMort
 
     def run(self):
         self._actif = True
         cpt = 0
-        pct = 0
+        pctInfecte = 0
+        pctMort = 0
         while self._actif:
             time.sleep (0.5)
             if (not(self._pause)):
@@ -832,11 +847,13 @@ class ThreadCommands(threading.Thread):
                 self.grille.lancerVoyages(self)
                 cpt = cpt +1
                 self.compteur.config(text="Jour " + repr(cpt))
-                pct = int(self.grille.nbInfecte*100/(self.grille.nbInfecte + self.grille.nbSain))
-                self.pctInfecte.config(text="Infectes: " + repr(pct) + "%")
+                pctInfecte = int(self.grille.nbInfecte*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort))
+                self.pctInfecte.config(text="Infectes: " + repr(pctInfecte) + "%")
+                pctMort = int(self.grille.nbMort*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort))
+                self.pctMort.config(text="Morts: " + repr(pctMort) + "%")
 
             # Arrêt si grille totalement infectée
-            if (pct>=100):
+            if (pctInfecte >= 100):
                 self.pause()
 
     def stop(self):
@@ -854,7 +871,6 @@ class ThreadCommands(threading.Thread):
         self._pause = False
         for anim in self.grille.animations:
             anim.continu()
-
 # END ThreadCommands
 
 
@@ -898,7 +914,9 @@ class ThreadAnimation(threading.Thread):
             if (not(self._pause)):
                 self.grille.zoneDessin.move(train, deltaX*self.deplacement.vitesse, deltaY*self.deplacement.vitesse)
                 self.grille.zoneDessin.update()
-            time.sleep(0.025)
+                time.sleep(0.025)
+            else:
+                time.sleep(0.5)
 
         self.grille.zoneDessin.delete(train)
 
@@ -918,7 +936,6 @@ class ThreadAnimation(threading.Thread):
 
     def continu(self):
         self._pause = False
-
 # END ThreadAnimation
 
 
@@ -928,6 +945,7 @@ class Virus:
         self.label = label
         if (self.label == "Peste noire"):
             self.tauxReproduction = 15
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.7
             self.tauxAge50 = 0.6
             self.tauxAge70 = 0.7
@@ -936,6 +954,7 @@ class Virus:
 
         elif (self.label == "Rougeole"):
             self.tauxReproduction = 12
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.6
             self.tauxAge50 = 0.5
             self.tauxAge70 = 0.6
@@ -944,6 +963,7 @@ class Virus:
 
         elif (self.label == "Coqueluche"):
             self.tauxReproduction = 10
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.6
             self.tauxAge50 = 0.5
             self.tauxAge70 = 0.5
@@ -952,6 +972,7 @@ class Virus:
 
         elif (self.label == "Diphtérie"):
             self.tauxReproduction = 8
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.6
             self.tauxAge50 = 0.4
             self.tauxAge70 = 0.5
@@ -960,6 +981,7 @@ class Virus:
 
         elif (self.label == "Variole"):
             self.tauxReproduction = 6
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.6
             self.tauxAge50 = 0.4
             self.tauxAge70 = 0.4
@@ -968,6 +990,7 @@ class Virus:
 
         elif (self.label == "Poliomyélite"):
             self.tauxReproduction = 4
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.6
             self.tauxAge50 = 0.3
             self.tauxAge70 = 0.2
@@ -976,6 +999,7 @@ class Virus:
 
         elif (self.label == "Grippe"):
             self.tauxReproduction = 2
+            self.tempsFatalite = 4
             self.tauxAge15 = 0.5
             self.tauxAge50 = 0.3
             self.tauxAge70 = 0.4
@@ -984,12 +1008,12 @@ class Virus:
 
         else: # Virus inconnu
             self.tauxReproduction = 5
+            self.tempsFatalite = 10
             self.tauxAge15 = 0.5
             self.tauxAge50 = 0.5
             self.tauxAge70 = 0.5
             self.tauxAge90 = 0.5
             self.tauxAge100 = 0.5
-
 # END Virus
 
 
@@ -1074,56 +1098,60 @@ def concatener(liste1, liste2):
 
 # Lance la simulation
 def lancerSimulation():
-	# Test si les entrées sont bien des entiers
-	try:
-		nbCellulesHauteur = int(hauteurEntry.get())
-		nbCellulesLargeur = int(largeurEntry.get())
-	except ValueError:
-		return
+    # Test si les entrées sont bien des entiers
+    try:
+        nbCellulesHauteur = int(hauteurEntry.get())
+        nbCellulesLargeur = int(largeurEntry.get())
+    except:
+        return
 
-	# La grille ne peut pas faire moins de 1px de largeur ou de hauteur
-	if (nbCellulesHauteur < 1 or nbCellulesLargeur < 1):
-		return
+    # La grille ne peut pas faire moins de 1px de largeur ou de hauteur
+    if (nbCellulesHauteur < 1 or nbCellulesLargeur < 1):
+        return
 
-	nomVirus = var.get()
+    nomVirus = var.get()
 
-	# Création de la fenêtre
-	simulation = Tk()
-	simulation.title('Propagation ' + nomVirus)
+    # Création de la fenêtre
+    simulation = Tk()
+    simulation.title('Propagation ' + nomVirus)
 
-	# Création compteur de jour
-	compteur = Label(simulation, text="Jour 0")
-	compteur.pack()
+    # Création compteur de jour
+    compteur = Label(simulation, text="Jour 0")
+    compteur.pack()
 
-	# Affichage du pourcentage de cellules inféctées
-	pctInfecte = Label(simulation, text="Infecte : 0%")
-	pctInfecte.pack()
+    # Affichage du pourcentage de cellules inféctées
+    pctInfecte = Label(simulation, text="Infecte : 0%")
+    pctInfecte.pack()
 
-	# Affiche le nom du virus
-	Label(simulation, text="Virus : " + nomVirus).pack()
+    # Affichage du pourcentage de cellules mortes
+    pctMort = Label(simulation, text="Mort : 0%")
+    pctMort.pack()
 
-	# Création de la grille représentative de la population
-	# Paramètres = fenetre, hauteur, largeur, nomVirus, nb de personne dans un carré
-	grille = Grille(simulation, nbCellulesHauteur, nbCellulesLargeur, Virus(nomVirus), 5)
-	grille.afficher()
+    # Affiche le nom du virus
+    Label(simulation, text="Virus : " + nomVirus).pack()
 
-	# Création d'un thread pour la propagation
-	commandes = ThreadCommands(grille, compteur, pctInfecte)
-	commandes.start()
+    # Création de la grille représentative de la population
+    # Paramètres = fenetre, hauteur, largeur, nomVirus, nb de personne dans un carré
+    grille = Grille(simulation, nbCellulesHauteur, nbCellulesLargeur, Virus(nomVirus), 5)
+    grille.afficher()
 
-	# Arrête le processus créé par le thread lorsque la fenêtre est fermée
-	simulation.protocol("WM_DELETE_WINDOW", commandes.stop)
+    # Création d'un thread pour la propagation
+    commandes = ThreadCommands(grille, compteur, pctInfecte, pctMort)
+    commandes.start()
 
-	# Creation des boutons
-	boutonStart = Button(simulation, text="Start", bg="green", command=commandes.continu)
-	boutonStart.pack(side="left")
-	boutonPause = Button(simulation, text="Pause", bg="orange", command=commandes.pause)
-	boutonPause.pack(side="left")
-	boutonStop = Button(simulation, text="Stop", bg="red", command=commandes.stop)
-	boutonStop.pack(side="left")
+    # Arrête le processus créé par le thread lorsque la fenêtre est fermée
+    simulation.protocol("WM_DELETE_WINDOW", commandes.stop)
 
-	# Lancement de la fenêtre
-	simulation.mainloop()
+    # Creation des boutons
+    boutonStart = Button(simulation, text="Start", bg="green", command=commandes.continu)
+    boutonStart.pack(side="left")
+    boutonPause = Button(simulation, text="Pause", bg="orange", command=commandes.pause)
+    boutonPause.pack(side="left")
+    boutonStop = Button(simulation, text="Stop", bg="red", command=commandes.stop)
+    boutonStop.pack(side="left")
+
+    # Lancement de la fenêtre
+    simulation.mainloop()
 
 
 #### FONCTION MAIN ####
@@ -1152,12 +1180,12 @@ largeurEntry.pack()
 var = StringVar()
 Label(root, text="Choisir le virus", bg="white").pack()
 for i in range (len(virus)):
-	radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i],borderwidth=8 , bg="white"))
-	radioVirus[i].pack()
+    radioVirus.append(Radiobutton(root, text=virus[i], variable=var, value=virus[i],borderwidth=8 , bg="white"))
+    radioVirus[i].pack()
 
 # On selectionne par defaut le premier virus
 for radio in radioVirus:
-	radio.deselect()
+    radio.deselect()
 radioVirus[0].select()
 
 # Bouton pour lancer la simulation
