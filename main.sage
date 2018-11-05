@@ -10,134 +10,174 @@
 #
 ############################################################################
 
-from tkinter import *
-import time
-import threading
-from random import *
-import copy
-from random import *
-from math import sqrt
+from tkinter import * # Fenêtre graphique et IHM
+import time # Pauses
+import threading # Execution de plusieurs partie du code en même temps
+from random import * # Nombres aléatoires
+import copy # Faire une copie d'un objet, et pas simplement une copie de sa référence
+from math import sqrt # Racine carrée
 
-# La classe cellule représente une cellule de la grille non peuplée
+"""Cellule de la grille non peuplée"""
 class Cellule:
+    """Constructeur"""
     def __init__(self, tailleCellule, etat):
 
+        """Etat de la cellule"""
         self.etat = etat
+        """Taille graphique en pixels de la cellule"""
         self.tailleCellule = tailleCellule
-        self.setEtat(etat)
+        """Représentation graphique de la cellule"""
         self.carreGraphique = 0
+        self.setEtat(etat)
 
+    """Change l'état de la cellule et modifie sa couleur en fonction"""
     def setEtat (self, etat):
         self.etat = etat;
-        if (self.etat == "mur"):
-            self.couleur = 'black'
-        elif(self.etat == "eau"):
+        # Cellule représentant de l'eau (utilisé pour les fleuves)
+        if(self.etat == "eau"):
             self.couleur = 'blue'
-        else: # donc cellule vide
+        # Zone déserte
+        else:
             self.couleur = 'white'
 
+    """Affiche la cellule sur le canvas à la position (x,y)"""
     def afficher (self, canvas, x, y):
+        # Abscisse en pixel du coin haut gauche de la cellule
         x0 = x*self.tailleCellule
+        # Ordonnée en pixel du coin haut gauche de la cellule
         y0 = y*self.tailleCellule
+        # Abscisse en pixel du coin bas droit de la cellule
         x1 = (x*self.tailleCellule)+self.tailleCellule
+        # Ordonnée en pixel du coin bas droit de la cellule
         y1 = (y*self.tailleCellule)+self.tailleCellule
 
-        # Taille bordure cellule
+        # Taille de la bordure de la cellule en pixels
         if (self.tailleCellule > 2):
             bordure = 1
         else:
             bordure = 0
 
+        # Création de la représentation graphique de la cellule
         self.carreGraphique = canvas.create_rectangle(x0, y0, x1, y1, fill=self.couleur, width=bordure)
 # END Cellule
 
 
-# La classe CellulePopulation représente une cellule peuplée
+"""Cellule peuplée par n habitants"""
 class CellulePopulation (Cellule):
+    """Constructeur"""
     def __init__(self, tailleCellule, etat, moyenneAge):
-        self.etatARestituer = "inchange" # Défini l'état que la cellule oit retrouver au tour suivant
+        """Etat a restituer à la cellule au tour suivant (utilisé pour infecter une cellule pendant un seul tour)"""
+        self.etatARestituer = "inchange"
+        """Taille graphique en pixels de la cellule"""
         self.tailleCellule = tailleCellule
+        """Moyenne d'age de la cellule"""
         self.moyenneAge = moyenneAge
+        """Compte le nombre de tour depuis la dernière infection"""
         self.nbJourInfection = 0
         self.setEtat(etat)
 
+    """Change l'état de la cellule et modifie sa couleur en fonction"""
     def setEtat (self, etat):
         self.etat = etat
+        # Cellule saine (potentiellement infectable)
         if (self.etat == "sain"):
             self.couleur = 'green'
+            self.nbJourInfection = 0
+        # Cellule guérie (donc immunisée)
         elif (self.etat == "gueri"):
             self.couleur = 'chartreuse'
             self.nbJourInfection = 0
+        # Cellule infectée
         elif (self.etat == "infecte"):
             self.couleur = 'red'
+        # Cellule morte
         elif (self.etat == "mort"):
             self.couleur = 'gray'
-        else: # donc cellule inconnue
+            self.nbJourInfection = 0
+        # Cellule inconnue
+        else:
             self.couleur = 'yellow'
 
-    # gerererAgeMoyen renvoie un age moyen calculé à partir du nombre de personnes
-    # représentées par une cellule et les statistiques trouvée sur le site :
-    # https://fr.statista.com/statistiques/472349/repartition-population-groupe-dage-france/
+    """Renvoie un age moyen calculé à partir du nombre de personnes nbPers par cellule"""
+    """Calcul réalisés à partir de l'age moyen en France : https://fr.statista.com/statistiques/472349/repartition-population-groupe-dage-france/"""
     @staticmethod
     def genenerAgeMoyen(nbPers):
-        ageMoy = 0
+        sommeAges = 0
+        # On tire un age entre 0 et 100 pour chaque personne présente dans la cellule selon les proportions d'age en France
         for i in range (nbPers):
             nbAlea = uniform(0, 100)
+            # 18,2% de chance que l'age soit entre 0 et 14 ans
             if (nbAlea < 18.2):
                 age = randint(0,14)
+            # 6,2% de chance que l'age soit entre 15 et 19 ans
             elif(nbAlea < 18.2 + 6.2):
                 age = randint(15,19)
+            # 5,6% de chance que l'age soit entre 20 et 24 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6):
                 age = randint(20,24)
+            # 5.8% de chance que l'age soit entre 25 et 29 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8):
                 age = randint(25,29)
+            # 6% de chance que l'age soit entre 30 et 34 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6):
                 age = randint(30,34)
+            # 6,3% de chance que l'age soit entre 35 et 39 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3):
                 age = randint(35,39)
+            # 6,3% de chance que l'age soit entre 40 et 44 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3):
                 age = randint(40,44)
+            # 6,8% de chance que l'age soit entre 45 et 49 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8):
                 age = randint(45,49)
+            # 6,7% de chance que l'age soit entre 50 et 54 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7):
                 age = randint(50,54)
+            # 6,4% de chance que l'age soit entre 55 et 59 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7 + 6.4):
                 age = randint(55,59)
+            # 6,1% de chance que l'age soit entre 60 et 64 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7 + 6.4 + 6.1):
                 age = randint(60,64)
+            # 5,9% de chance que l'age soit entre 65 et 69 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7 + 6.4 + 6.1 + 5.9):
                 age = randint(65,69)
+            # 4,5% de chance que l'age soit entre 70 et 14 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7 + 6.4 + 6.1 + 5.9 + 4.5):
                 age = randint(70,74)
+            # 9,2% de chance que l'age soit entre 75 et 100 ans
             elif(nbAlea < 18.2 + 6.2 + 5.6 + 5.8 + 6 + 6.3 + 6.3 + 6.8 + 6.7 + 6.4 + 6.1 + 5.9 + 4.5 + 9.2):
                 age = randint(75,100)
 
-            ageMoy += age
+            sommeAges += age
 
-        ageMoy = round(ageMoy/nbPers)
+        ageMoy = round(sommeAges/nbPers)
         return ageMoy
 # END CellulePopulation
 
 
-# La classe Position représente une position 2D dans la grille
+"""Position 2D"""
 class Position:
+    """Constructeur"""
     def __init__(self, posX, posY):
+        """Abscisse"""
         self.X = posX
+        """Ordonnée"""
         self.Y = posY
 
+    """Renvoie la distance entre la position courante et la position en paramètre"""
     def distance(self, pos):
         # Distance de A à B = racine((Xb-Xa)^2 + (Yb-Ya)^2)
         # On prend la valeur absolue car l'orientation dans le repère ne nous interesse pas
         distance = int(abs(sqrt((pos.X-self.X)*(pos.X-self.X) + (pos.Y-self.Y)*(pos.Y-self.Y))))
         return distance
-
-    def printPos(self):
-        print("Position (" + repr(self.X) + ", " + repr(self.Y) + ")")
 # END Position
 
 
-# Classe Fleuve représente un fleuve
+"""Fleuve composé de cellules d'eau"""
 class Fleuve:
+    """Constructeur : construit un fleuve aléatoirement sur la grille"""
+    # TODO Commentaires
     def __init__(self, grille):
         self.parcours = []
         # Largueur du fleuve maximum 1/10 de la taille max de la grille
@@ -201,19 +241,29 @@ class Fleuve:
                 # Position de la prochaine cellule du fleuve
                 pos.X = randint(pos.X-1, pos.X+1)
                 pos.Y += 1
-                pos = copy.deepcopy(pos) # Pos pointe sur une nouvele case mémoire
+                # Pos pointe sur une nouvele case mémoire #
+                pos = copy.deepcopy(pos)
 # END Fleuve
 
 
-# La classe zone urbaine représente des regroupements de population sur la grille
+"""Regroupements de population sur la grille"""
 class ZoneUrbaine:
+    """Constructeur : construit une zone urbaine de type 'genre' aléatoirement"""
     def __init__(self, grille, genre):
-        self.genre = genre # (Metropole, Ville, ZonePeuplee, Village)
+        """Type de zone (Metropole, Ville, ZonePeuplee, Village). La ZonePeuplee est une zone de campagne fortement peuplée"""
+        self.genre = genre
+        """Position du centre de la zone sur la grille"""
         self.pos = Position(randint(0, grille.nbCelluleLargeur-1), randint(0, grille.nbCelluleHauteur-1))
+        """Nombre de sains habitant la zone"""
         self.nbSain = 0
+        """Nombre d'infectés habitant la zone"""
         self.nbInfecte = 0
+        """Nombre de morts dans la zone"""
         self.nbMort = 0
+        """Nombre de guéris habitant la zone"""
         self.nbGueri = 0
+        """Rayon de la zone"""
+        self.rayon = 0
 
         if (self.genre == "Metropole"): # Rayon entre 1/3 et 1/2 de la taille maximale de la grille
             if (grille.nbCelluleHauteur < grille.nbCelluleLargeur):
@@ -241,17 +291,17 @@ class ZoneUrbaine:
         if (self.rayon == 0):
             self.rayon = 1
 
-    # Renvoie la distance du point (posX, posY) au centre de la zone courante
+    """Renvoie la distance du point (posX, posY) au centre de la zone courante"""
     def distanceAuCentre(self, position):
         return position.distance(self.pos)
 
-    # Renvoie True si le point (posX, posY) appartient à la zone courante
+    """Renvoie True si le point (posX, posY) appartient à la zone courante, False sinon"""
     def contient(self, position):
         if (self.distanceAuCentre(position) <= self.rayon):
             return True;
         return False;
 
-    # Renvoie True si la zone courante chevauche la zone zoneUrbaine
+    """Renvoie True si la zone courante chevauche la zone zoneUrbaine, False sinon"""
     def chevauche(self, zoneUrbaine):
         distanceZones = zoneUrbaine.distanceAuCentre(self.pos)
         if (distanceZones < self.rayon + zoneUrbaine.rayon):
@@ -260,37 +310,49 @@ class ZoneUrbaine:
 # END ZoneUrbaine
 
 
-# La classe Deplacement représente un moyen de transport allant d'un point à un autre
+"""Moyen de transport allant d'un point à un autre"""
 class Deplacement:
+    """Constructeur"""
     def __init__(self, etat, pos1, pos2, tailleCellule):
-        self.setEtat(etat)
+        """Position de l'extrémité 1"""
         self.pos1 = pos1
+        """Position de l'extrémité 2"""
         self.pos2 = pos2
+        """Taille d'une cellule de la grile sur laquelle est le déplacement"""
         self.tailleCellule = tailleCellule
+        """Probabilité qu'un voyage se réalise sur le déplacement, à chaque tour"""
+        self.probaVoyage = 0
+        """Vitesse des voyages sur le déplacement en nombre de fois sa distance toutes les 0.025sec"""
+        self.vitesse = 0
 
+        self.setEtat(etat)
+
+    """Défini l'état (le type) du déplacement, ainsi que d'autres paramètres en conséquence"""
     def setEtat (self, etat):
         self.etat = etat
         if (self.etat == "pont"):
             self.couleur = 'lime'
             self.probaVoyage = 100
-            self.vitesse = 1 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 1
         elif (self.etat == "route"):
             self.couleur = 'brown'
             self.probaVoyage = 5
-            self.vitesse = 0.02 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0.02
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
             self.probaVoyage = 3
-            self.vitesse = 0.05 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0.05
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
             self.probaVoyage = 1
-            self.vitesse = 0.1 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0.1
         else: # donc cellule inconnue
             self.couleur = 'yellow'
             self.probaVoyage = 0
-            self.vitesse = 0 # en nombre de fois la distance toutes les 0.025sec
+            self.vitesse = 0
 
+    """Affiche le déplacement"""
+    # TODO commentaires
     def afficher (self, canvas):
         x0 = self.pos1.X*self.tailleCellule + int(10/100 * self.tailleCellule)
         y0 = self.pos1.Y*self.tailleCellule + int(10/100 * self.tailleCellule)
@@ -318,9 +380,29 @@ class Deplacement:
         canvas.create_line(x0, y0, x1, y1, fill=self.couleur, width=epaisseur)
 # END Deplacement
 
-# La classe Virus représente le virus à propager
+"""Virus pouvant être propagé"""
 class Virus:
+    """Constructeur : défini tous les paramètres du virus en fonction de son nom (label)"""
     def __init__(self, label):
+        """Taux d'infectiosité du virus"""
+        self.tauxReproduction = 0
+        """Durée d'activité du virus en jours"""
+        self.duree = 0
+        """Pourcentage de chance de décès de la cellule porteuse"""
+        self.tauxLetalite = 0
+        """tauxAgeN : probabilité d'infection si la cellule d'age moyen < N entre en contact avec le virus"""
+        self.tauxAge3 = 0.9
+        self.tauxAge15 = 0.8
+        self.tauxAge50 = 0.7
+        self.tauxAge70 = 0.7
+        self.tauxAge90 = 0.8
+        self.tauxAge100 = 0.9
+
+        self.setLabel(label)
+
+    """Change le nom du virus et tous les paramètres en conséquence"""
+    def setLabel (self, label):
+        """Nom du virus"""
         self.label = label
         if (self.label == "peste noire"):
             self.tauxReproduction = 15 #TODO
@@ -341,7 +423,7 @@ class Virus:
             # https://fr.wikipedia.org/wiki/rougeole
             self.duree = 15
             # Non mortelle
-            self.tauxLetalite = 0
+            self.tauxLetalite = 1
             # https://fr.wikipedia.org/wiki/rougeole
             self.tauxAge3 = 0.8
             self.tauxAge15 = 0.5
@@ -404,17 +486,26 @@ class Virus:
 # END Virus
 
 
-# La classe ThreadCommands permet de lancer un second processus
+"""Thread controllant la simuation"""
 class ThreadCommands(threading.Thread):
+    """Constructeur"""
     def __init__(self, grille, compteur, pctInfecte, pctMort):
+        # Construction du thread
         threading.Thread.__init__(self)
+        """Défini si le thread est actif ou non"""
         self._actif = False
+        """Défini si le thread est en pause ou non"""
         self._pause = True
+        """Grille sur laquelle a lieu la simulation"""
         self.grille = grille
+        """Nombre de jours de actuel de la simulation"""
         self.compteur = compteur
+        """Pourcentage actuel de cellules infectées sur la grille"""
         self.pctInfecte = pctInfecte
+        """Pourcentage actuel de cellules mortes sur la grille"""
         self.pctMort = pctMort
 
+    """Programme éxécuté par le Thread"""
     def run(self):
         self._actif = True
         cpt = 0
@@ -432,8 +523,8 @@ class ThreadCommands(threading.Thread):
                 pctMort = int(self.grille.nbMort*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort + self.grille.nbGueri))
                 self.pctMort.config(text="Morts: " + repr(pctMort) + "%")
 
-            # Arrêt si grille totalement infectée
-            if (pctInfecte >= 100):
+            # Arrêt si grille totalement infectée ou que le virus est éradiqué
+            if (pctInfecte >= 100 or (self.grille.nbInfecte == 0 and cpt > 0)):
                 self.pause()
 
     """Arrête tous les processus en cours"""
@@ -455,18 +546,29 @@ class ThreadCommands(threading.Thread):
 # END ThreadCommands
 
 
-# La classe ThreadCommands permet l'affichage des voyages
+"""Gestion des voyages indépendament du reste de la simulation"""
 class ThreadAnimation(threading.Thread):
+    """Constructeur"""
     def __init__(self, grille, deplacement, depart, arrivee, voyageur):
+        # Construction du thread
         threading.Thread.__init__(self)
+        """Défini si le thread est actif ou non"""
         self._actif = True
+        """Défini si le thread est en pause ou non"""
         self._pause = False
+        """Grille dans laquelle a lieu le voyage"""
         self.grille = grille
+        """Deplacement sur lequel a lieu le voyage"""
         self.deplacement = deplacement
+        """Départ du voyage"""
         self.depart = depart
+        """Arrivée du voyage"""
         self.arrivee = arrivee
+        """Etat du voyageur (sain, infecté, guéri)"""
         self.voyageur = voyageur
 
+    """Programme éxécuté par le Thread"""
+    # TODO commentaires
     def run(self):
         if (self.voyageur == "sain"):
             couleur = 'green'
@@ -511,42 +613,63 @@ class ThreadAnimation(threading.Thread):
                 self.grille.nbSain -= 1
                 self.grille.zoneDessin.itemconfig(self.grille.matCell[self.arrivee.Y][self.arrivee.X].carreGraphique, fill='red')
 
+    """Arrête le Thread"""
     def stop(self):
-        self._actif = False
+        self._actif = False #
+        for i in range (0, len(self.grille.animations)):
+            if self.grille.animations[i] == self:
+                del self.grille.animations[i]
 
+    """Met le Thread en pause"""
     def pause(self):
         self._pause = True
 
+    """Enlève le Thread de la pause"""
     def continu(self):
         self._pause = False
 # END ThreadAnimation
 
-# La classe Grille représente la carte
+"""Grille contenant toutes les cellules. Représente la zone géographique de la simulation"""
 class Grille:
+    """Constructeur : construit une grille et tout ce qu'elle contient aléatoirement"""
     def __init__(self, fenetre, nbCelluleHauteur, nbCelluleLargeur, virus, nbPers):
         print("Génération de la grille...")
 
-        # Initialisation des attributs de la grille
+        """Hauteur de la grille en nombre de cellules"""
         self.nbCelluleHauteur = nbCelluleHauteur
+        """Largeur de la grille en nombre de cellules"""
         self.nbCelluleLargeur = nbCelluleLargeur
+        """Virus a propager sur la grille"""
         self.virus = virus
+        """Nombre de personnes représenté par une cellule de la grille"""
         self.nbPers = nbPers
+        """Nombre de cellules infectées de la grille"""
         self.nbInfecte = 0
+        """Nombre de cellules saines de la grille"""
         self.nbSain = 0
+        """Nombre de cellules mortes de la grille"""
         self.nbMort = 0
+        """Nombre de cellules guéries de la grille"""
         self.nbGueri = 0
 
+        # Défini la taille des cellules en pixels pour que la fenêtre ne soit pas d'une taille supérieure à celle de l'écran
         hauteurEcranPx = fenetre.winfo_screenheight()
         largeurEcranPx = fenetre.winfo_screenwidth()
         self.tailleCellule = int((hauteurEcranPx-200)/nbCelluleHauteur)
         if (nbCelluleLargeur*self.tailleCellule > largeurEcranPx):
             self.tailleCellule = int(largeurEcranPx/nbCelluleLargeur)
 
+        """Zone dans laquelle sera représentée la simulation"""
         self.zoneDessin = Canvas(fenetre, width=self.tailleCellule*nbCelluleLargeur, height=self.tailleCellule*self.nbCelluleHauteur, background='white')
 
+        """Toutes les cellules de la grille"""
         self.matCell = []
+        """Tous les déplacements de la grille"""
         self.deplacements = []
+        """Toutes les animations de vayage de la grille"""
         self.animations = []
+        """Toutes les zone urbaines de la grille"""
+        self.zonesUrbaines = self.genererZonesUrbaines()
 
         # Affectation des actions de la souris
         self.zoneDessin.bind("<Button-1>", self.infecterManu)
@@ -554,10 +677,7 @@ class Grille:
         self.zoneDessin.bind("<Button-3>", self.guerirManu)
         self.zoneDessin.pack()
 
-        # Création des zones urbaines
-        self.zonesUrbaines = self.genererZonesUrbaines()
-
-        #Crée les carrés composant la grille et les range dans une matrice
+        # Création des carrés composant la grille
         for y in range (nbCelluleHauteur):
             ligne = []
             for x in range (nbCelluleLargeur):
@@ -617,7 +737,7 @@ class Grille:
 
         print("Grille générée !")
 
-    # genererZonesUrbaines génère aléatoirement des zones urbaines dans la grille
+    """Génère aléatoirement des zones urbaines dans la grille"""
     def genererZonesUrbaines(self):
         zonesUrbaines = []
 
@@ -660,7 +780,7 @@ class Grille:
 
         return zonesUrbaines
 
-    # Génère tous les déplacements de la grille
+    """Génère tous les déplacements de la grille"""
     def genererDeplacements(self):
         # Taille minimal pour générer un fleuve
         if(self.nbCelluleLargeur >= 30 and self.nbCelluleHauteur >= 30):
@@ -702,7 +822,7 @@ class Grille:
         concatener(self.deplacements, algoPrim(self, "voieFerree"))
         concatener(self.deplacements, algoPrim(self, "ligneAerienne"))
 
-    # Lance tous les voyages
+    """Lance tous les voyages"""
     def lancerVoyages(self, Thread):
         for i in range (len(self.deplacements)):
             deplacement = self.deplacements[i]
@@ -759,12 +879,12 @@ class Grille:
                             self.nbSain -= 1
                             self.zoneDessin.itemconfig(self.matCell[arrivee.Y][arrivee.X].carreGraphique, fill='red')
 
-    # Afficher tous les déplacements de la grille
+    """Affiche tous les déplacements de la grille"""
     def afficherDeplacements(self):
         for i in range (len(self.deplacements)):
             self.deplacements[i].afficher(self.zoneDessin)
 
-    # Affiche la grille
+    """Affiche la grille et les déplacements"""
     def afficher(self):
         for y in range(len(self.matCell)):
             for x in range(len(self.matCell[0])):
@@ -772,47 +892,57 @@ class Grille:
         self.afficherDeplacements()
         self.zoneDessin.update()
 
-    # Infecte la cellule lorsqu'on clique gauche dessus
+    """Infecte la cellule à la position du curseur de la souris"""
     def infecterManu(self, event):
+        # Abscisse et ordonnée du curseur de la souris
         x = event.x - (event.x%self.tailleCellule)
         y = event.y - (event.y%self.tailleCellule)
 
+        # On en déduit la position de la cellule pointée
         i = int(x/self.tailleCellule)
         j = int(y/self.tailleCellule)
 
+        # On infecte la cellule seulement si elle est saine
         if(self.matCell[j][i].etat == "sain"):
             self.matCell[j][i].setEtat("infecte")
             self.zoneDessin.itemconfig(self.matCell[j][i].carreGraphique, fill='red')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") infectée manuellement.")
+            # Mise à jour des compteurs de la grille
             self.nbSain -= 1
             self.nbInfecte += 1
+            # Mise à jour des compteurs des zones urbaines
             for numZone in range (len(self.zonesUrbaines)):
                 zone = self.zonesUrbaines[numZone]
                 if (zone.contient(Position(i,j))):
                     zone.nbSain -= 1
                     zone.nbInfecte += 1
 
-    # Soigne la cellule lorsqu'on clique droit dessus
+    """Rend saine la cellule à la position du curseur de la souris"""
     def guerirManu(self, event):
+        # Abscisse et ordonnée du curseur de la souris
         x = event.x -(event.x%self.tailleCellule)
         y = event.y -(event.y%self.tailleCellule)
 
+        # On en déduit la position de la cellule pointée
         i = int(x/self.tailleCellule)
         j = int(y/self.tailleCellule)
 
+        # On rend saine la cellule seulement si elle est infectée
         if(self.matCell[j][i].etat == "infecte"):
             self.matCell[j][i].setEtat("sain")
             self.zoneDessin.itemconfig(self.matCell[j][i].carreGraphique, fill='green')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") guérie manuellement.")
+            # Mise à jour des compteurs de la grille
             self.nbSain += 1
             self.nbInfecte -= 1
+            # Mise à jour des compteurs des zones urbaines
             for numZone in range (len(self.zonesUrbaines)):
                 zone = self.zonesUrbaines[numZone]
                 if (zone.contient(Position(i,j))):
                     zone.nbSain += 1
                     zone.nbInfecte -= 1
 
-    # Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest
+    """Défini si la cellule(posX, posY) devient infectée dans la grille matDeTest"""
     def soumettreAuVirus (self, matDeTest, posX, posY):
         tauxInfection = 0 # Probabilité qu'une cellule devienne infectée
         tauxContact = 0.0 # Taux de contact de la cellule courante avec les cellules infectées alentoures
@@ -1009,7 +1139,7 @@ class Grille:
                         zone.nbSain -= 1
                         zone.nbInfecte += 1
 
-    # Propage le virus jour par jour automatiquement
+    """Propage le virus d'un jour"""
     def propager (self):
         matDeTest = copy.deepcopy(self.matCell)
         for y in range(self.nbCelluleHauteur):
@@ -1048,15 +1178,15 @@ class Grille:
                                         zone.nbInfecte -= 1
                                         zone.nbGueri += 1
 
-    # Propage le virus d'un jour
+    """Propage le virus d'un jour (lors de la détection d'un évènement)"""
     def propagerUneFois (self, event):
         self.propager()
 # END Grille
 
 
-# Execute l'algorithme de prim sur le graphe complet composé des centres de toutes
-# les zones urbaines de 'grille' pouvant comporter un deplacement de type 'genre'
-# Le graphe généré est composé de déplacements.
+"""Execute l'algorithme de prim sur le graphe complet composé des centres de toutes
+les zones urbaines de 'grille' pouvant comporter un deplacement de type 'genre'
+Le graphe généré est composé de déplacements."""
 def algoPrim(grille, genre):
     zones = grille.zonesUrbaines
     sommets = []
@@ -1127,13 +1257,13 @@ def algoPrim(grille, genre):
     return dep
 
 
-# Concatène 2 listes
+"""Concatène 2 listes (array)"""
 def concatener(liste1, liste2):
     for i in range (len(liste2)):
         liste1.append(liste2[i])
 
 
-# Lance la simulation
+"""Lance la simulation"""
 def lancerSimulation():
     # Test si les entrées sont bien des entiers
     try:
