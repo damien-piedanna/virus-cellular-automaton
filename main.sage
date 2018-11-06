@@ -997,7 +997,7 @@ class Virus:
             self.tauxReproduction = 6
             # https://www.mesvaccins.net/web/diseases/4-poliomyelite
             self.dureeMin = 21 # 3 semaines
-            self.duree = 90 # 3 mois
+            self.dureeMax = 90 # 3 mois
             # https://www.wiv-isp.be/matra/Fiches/Polio.pdf
             self.tauxLetalite = 10
             # http://www.who.int/features/factfiles/polio/fr/
@@ -1201,6 +1201,7 @@ class ThreadAnimation(threading.Thread):
         for i in range (len(self.grille.animations)):
             if self.grille.animations[i] == self:
                 del self.grille.animations[i]
+                break
 
     """Met le Thread en pause"""
     def pause(self):
