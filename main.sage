@@ -523,8 +523,8 @@ class ThreadCommands(threading.Thread):
                 pctMort = int(self.grille.nbMort*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort + self.grille.nbGueri))
                 self.pctMort.config(text="Morts: " + repr(pctMort) + "%")
 
-            # Arrêt si grille totalement infectée ou que le virus est éradiqué
-            if (pctInfecte >= 100 or (self.grille.nbInfecte == 0 and cpt > 0)):
+            # Arrêt lorsque le virus est éradiqué
+            if (self.grille.nbInfecte == 0):
                 self.pause()
 
     """Arrête tous les processus en cours"""
