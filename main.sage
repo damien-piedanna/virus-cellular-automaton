@@ -1077,20 +1077,33 @@ class ThreadCommands(threading.Thread):
     """Programme éxécuté par le Thread"""
     def run(self):
         self._actif = True
+        # Nombre de tours de simulation
         cpt = 0
+        # Poucentage d'infectés parmis les cellules de population de la grille
         pctInfecte = 0
+        # Poucentage de morts parmis les cellules de population de la grille
         pctMort = 0
+        # Poucentage de morts parmis les cellules ayant été infectées
+        tauxMortalite = 0
+
         while self._actif:
             time.sleep (0.5)
             if (not(self._pause)):
                 self.grille.propager()
                 self.grille.lancerVoyages(self)
+
                 cpt = cpt +1
                 self.compteur.config(text="Jour " + repr(cpt))
+
                 pctInfecte = int(self.grille.nbInfecte*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort + self.grille.nbGueri))
-                self.pctInfecte.config(text="Infectes: " + repr(pctInfecte) + "%")
+                self.pctInfecte.config(text="Infectes: " + repr(self.grille.nbInfecte) + " (" + repr(pctInfecte) + "%)")
+
+                if (self.grille.nbMort + self.grille.nbGueri):
+                    tauxMortalite = int(self.grille.nbMort*100/(self.grille.nbMort + self.grille.nbGueri))
+                else:
+                    tauxMortalite = 0
                 pctMort = int(self.grille.nbMort*100/(self.grille.nbInfecte + self.grille.nbSain + self.grille.nbMort + self.grille.nbGueri))
-                self.pctMort.config(text="Morts: " + repr(pctMort) + "%")
+                self.pctMort.config(text="Morts: " + repr(self.grille.nbMort) + " (" + repr(pctMort) + "% de la pop. totale et " + repr(tauxMortalite) + "% de la pop. infectée)")
 
             # Arrêt lorsque le virus est éradiqué et qu'il n'y a aucun voyageur infecté
             if (self.grille.nbInfecte == 0):
