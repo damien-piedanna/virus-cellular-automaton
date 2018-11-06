@@ -976,7 +976,7 @@ class Virus:
             self.tauxAge90 = 0.01
             self.tauxAge100 = 0.01
 
-        elif (self.label == "diphtérie"):
+        elif (self.label == "diphterie"):
             # https://fr.wikipedia.org/wiki/Mod%C3%A8les_compartimentaux_en_%C3%A9pid%C3%A9miologie
             self.tauxReproduction = 7
             # Pas de chiffre précis donné
@@ -992,7 +992,7 @@ class Virus:
             self.tauxAge90 = 0.7
             self.tauxAge100 = 0.8
 
-        elif (self.label == "poliomyélite"):
+        elif (self.label == "poliomyelite"):
             # https://fr.wikipedia.org/wiki/Mod%C3%A8les_compartimentaux_en_%C3%A9pid%C3%A9miologie
             self.tauxReproduction = 6
             # https://www.mesvaccins.net/web/diseases/4-poliomyelite
@@ -1198,7 +1198,7 @@ class ThreadAnimation(threading.Thread):
     def stop(self):
         self._actif = False
         # Suppresion de thread de la liste d'animations en cours de la grille
-        for i in range (0, len(self.grille.animations)):
+        for i in range (len(self.grille.animations)):
             if self.grille.animations[i] == self:
                 del self.grille.animations[i]
 
@@ -1351,7 +1351,7 @@ def lancerSimulation():
 
 #### FONCTION MAIN ####
 
-virus = ["peste", "rougeole", "diphtérie", "poliomyélite", "grippe"]
+virus = ["peste", "rougeole", "diphterie", "poliomyelite", "grippe"]
 radioVirus = []
 
 root = Tk()
