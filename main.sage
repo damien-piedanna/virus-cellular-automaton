@@ -945,14 +945,13 @@ class Virus:
         """Nom du virus"""
         self.label = label
         if (self.label == "peste"):
-            # http://aeema.vet-alfort.fr/index.php/component/glossary/Glossaire-1/T/TAUX-DE-REPRODUCTION-DE-BASE-%28d%E2%80%99une-maladie%29-Ro-347/
-            # Taux de la peste bovine
-            self.tauxReproduction = 5
+            # Valeur prise par défaut
+            self.tauxReproduction = 13
             # https://fr.wikipedia.org/wiki/Peste
             self.dureeMin = 5
             self.dureeMax = 9
             # http://www.who.int/fr/news-room/fact-sheets/detail/plague
-            self.tauxLetalite = 40
+            self.tauxLetalite = 50
             # https://fr.wikipedia.org/wiki/Peste_noire
             self.tauxAge3 = 0.9
             self.tauxAge15 = 0.8
