@@ -1116,10 +1116,11 @@ class ThreadCommands(threading.Thread):
 
     """Arrête tous les processus en cours"""
     def stop(self):
-        sys.exit("Arrêt du programme...")
         self._actif = False
         for anim in self.grille.animations:
+            anim.pause()
             anim.stop()
+        sys.exit("Arrêt du programme...")
 
     def pause(self):
         self._pause = True
