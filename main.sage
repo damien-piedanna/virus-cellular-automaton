@@ -874,15 +874,15 @@ class Deplacement:
             self.vitesse = 1
         elif (self.etat == "route"):
             self.couleur = 'brown'
-            self.probaVoyage = 7
+            self.probaVoyage = 50
             self.vitesse = 0.02
         elif (self.etat == "voieFerree"):
             self.couleur = 'orange'
-            self.probaVoyage = 5
+            self.probaVoyage = 30
             self.vitesse = 0.05
         elif (self.etat == "ligneAerienne"):
             self.couleur = 'pink'
-            self.probaVoyage = 2
+            self.probaVoyage = 20
             self.vitesse = 0.1
         else: # donc cellule inconnue
             self.couleur = 'yellow'
