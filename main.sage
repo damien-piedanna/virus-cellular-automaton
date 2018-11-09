@@ -315,8 +315,8 @@ class Grille:
         i = int(x/self.tailleCellule)
         j = int(y/self.tailleCellule)
 
-        # On rend saine la cellule seulement si elle est infectée
-        if(self.matCell[j][i].etat == "infecte" or self.matCell[j][i].etat == "gueri" or self.matCell[j][i].etat == "mort"):
+        # On rend saine la cellule seulement si elle est peuplée
+        if(isinstance(self.matCell[j][i], CellulePopulation)):
             self.matCell[j][i].setEtat("sain")
             self.zoneDessin.itemconfig(self.matCell[j][i].carreGraphique, fill='green')
             print("Cellule (" + repr(i) + " ; " + repr(j) + ") guérie manuellement.")
