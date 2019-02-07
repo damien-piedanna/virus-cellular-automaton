@@ -1,6 +1,6 @@
 # Projet de modélisation mathématique 
 ## Choix
-Le projet choisi est un automate cellulaire simulant la propagztion d'un virus (maladie) au sein d'une population.
+Le projet choisi est un automate cellulaire simulant la propagation d'un virus (maladie) au sein d'une population.
 
 ## Précisions
 Une carte composée de cellules est générée aléatoirement.
