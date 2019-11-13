@@ -1,4 +1,6 @@
-# Projet de modélisation mathématique 
+# Projet de modélisation mathématique
+> AMU ~ IUT2 ~ Math
+
 ## Choix
 Le projet choisi est un automate cellulaire simulant la propagation d'un virus (maladie) au sein d'une population.
 
