@@ -16,6 +16,7 @@ import threading # Execution de plusieurs partie du code en même temps
 from random import * # Nombres aléatoires
 import copy # Faire une copie d'un objet, et pas simplement une copie de sa référence
 from math import sqrt # Racine carrée
+import sys
 
 """Grille contenant toutes les cellules. Représente la zone géographique de la simulation"""
 class Grille:
